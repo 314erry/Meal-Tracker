@@ -1,0 +1,475 @@
+/* Base styles */
+:root {
+  --color-primary: #10b981;
+  --color-primary-hover: #059669;
+  --color-secondary: #6366f1;
+  --color-secondary-hover: #4f46e5;
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  --color-card: #ffffff;
+  --color-card-border: #e5e7eb;
+  --color-muted: #6b7280;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-protein: #10b981;
+  --color-carbs: #3b82f6;
+  --color-fat: #f59e0b;
+  --border-radius: 0.5rem;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #0a0a0a;
+    --color-foreground: #ededed;
+    --color-card: #1a1a1a;
+    --color-card-border: #2a2a2a;
+    --color-muted: #9ca3af;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  line-height: 1.5;
+}
+
+/* Layout */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.grid-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .grid-layout {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .three-columns {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .span-two {
+    grid-column: span 2;
+  }
+}
+
+.full-width-section {
+  margin-bottom: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.select-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+/* Typography */
+.page-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.card-description {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.empty-message {
+  text-align: center;
+  color: var(--color-muted);
+}
+
+/* Cards */
+.card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 1.25rem 1.25rem 0.5rem;
+}
+
+.card-content {
+  padding: 1.25rem;
+}
+
+.card-footer {
+  padding: 1.25rem;
+  border-top: 1px solid var(--color-card-border);
+}
+
+.chart-container {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Forms */
+.form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.form-input {
+  padding: 0.5rem;
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+.form-input:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* Buttons */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.button-primary {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+}
+
+.button-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.button-outline {
+  background-color: transparent;
+  border: 1px solid var(--color-card-border);
+  color: var(--color-foreground);
+}
+
+.button-outline:hover {
+  background-color: var(--color-background);
+  border-color: var(--color-primary);
+}
+
+.button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-muted);
+}
+
+.button-icon:hover {
+  color: var(--color-error);
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Tables */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-card-border);
+}
+
+.data-table th {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.empty-table-message {
+  text-align: center;
+  color: var(--color-muted);
+  padding: 1.5rem;
+}
+
+.total-row {
+  font-weight: 700;
+}
+
+/* Basic Calendar Styles */
+.basic-calendar {
+  width: 100%;
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: var(--color-card);
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.calendar-month {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.calendar-nav-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  color: var(--color-foreground);
+}
+
+.calendar-nav-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin-bottom: 0.5rem;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 2.5rem;
+  cursor: pointer;
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+}
+
+.day-number {
+  line-height: 1;
+}
+
+.meal-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  display: block;
+}
+
+.calendar-day:not(.empty):hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.calendar-day.selected {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.calendar-day.today:not(.selected) {
+  background-color: rgba(16, 185, 129, 0.1);
+  font-weight: bold;
+}
+
+.calendar-day.empty {
+  cursor: default;
+}
+
+/* Adherence */
+.adherence-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.adherence-circle {
+  position: relative;
+  height: 10rem;
+  width: 10rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 10px solid var(--color-primary);
+}
+
+.adherence-rate {
+  font-size: 3.75rem;
+  font-weight: 700;
+}
+
+.adherence-description {
+  color: var(--color-muted);
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+/* Month select */
+.month-select {
+  padding: 0.5rem;
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--border-radius);
+  background-color: var(--color-card);
+  color: var(--color-foreground);
+  font-size: 0.875rem;
+  min-width: 180px;
+}
+
+/* Icons */
+.icon-small {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Nutrition Summary */
+.nutrition-summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .nutrition-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .nutrition-summary {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.nutrition-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nutrition-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: white;
+}
+
+.nutrition-icon.calories {
+  background-color: var(--color-secondary);
+}
+
+.nutrition-icon.protein {
+  background-color: var(--color-protein);
+}
+
+.nutrition-icon.carbs {
+  background-color: var(--color-carbs);
+}
+
+.nutrition-icon.fat {
+  background-color: var(--color-fat);
+}
+
+.nutrition-details h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.nutrition-details p {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  margin: 0.25rem 0 0 0;
+}
