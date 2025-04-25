@@ -4,7 +4,7 @@ Como rodar:
 No diretório da pasta no terminal:
 Instale as dependencias
 ```
-npm install
+npm i --legacy-peer-deps
 ```
 Rode em modo developer
 ```
