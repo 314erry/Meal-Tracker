@@ -1,6 +1,7 @@
 import type React from "react"
 import "@/app/globals.css"
 import { Inter } from "next/font/google"
+import { MigrationHelper } from "@/components/migration-helper"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -17,7 +18,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <MigrationHelper />
+        {children}
+      </body>
     </html>
   )
 }
