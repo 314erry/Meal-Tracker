@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, use} from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { Trash2, Plus, Loader2, Edit, Check, X } from "lucide-react"
@@ -9,9 +9,9 @@ import { FoodSearch } from "@/components/food-search"
 import { ServingSelector } from "@/components/serving-selector"
 import { ApiStatusChecker } from "@/components/api-status-checker"
 
-export default function DayPage({ params }: { params: Promise<{ date: string }> }) {
-  const { date } = use(params) // This is the new recommended way
+export default function DayPage({ params }: { params: { date: string } }) {
   const router = useRouter()
+  const { date } = params
   const { meals, addMeal, removeMeal, updateMeal } = useMealStore()
 
   // Log the date parameter for debugging
@@ -20,6 +20,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
   }, [date])
 
   const [mealName, setMealName] = useState("")
+  const [originalFoodName, setOriginalFoodName] = useState("") // Store original English food name
   const [calories, setCalories] = useState("")
   const [protein, setProtein] = useState("")
   const [carbs, setCarbs] = useState("")
@@ -66,6 +67,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
       addMeal({
         date,
         name: mealName,
+        originalName: originalFoodName || undefined, // Store original English name
         calories: Number(calories),
         protein: Number(protein) || 0,
         carbs: Number(carbs) || 0,
@@ -83,6 +85,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
 
   const resetForm = () => {
     setMealName("")
+    setOriginalFoodName("")
     setCalories("")
     setProtein("")
     setCarbs("")
@@ -99,10 +102,15 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
     setEditingMeal(null)
   }
 
-  const handleSelectFood = async (foodName: string) => {
+  const handleSelectFood = async (foodName: string, originalName?: string) => {
     setSelectedFood(foodName)
     setLoading(true)
     setError(null)
+
+    // Store the original English food name if provided
+    if (originalName) {
+      setOriginalFoodName(originalName)
+    }
 
     try {
       const response = await fetch("/api/nutritionix/nutrients", {
@@ -125,6 +133,11 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
 
         setMealName(food.food_name)
 
+        // Store original English name if available
+        if (food.original_food_name) {
+          setOriginalFoodName(food.original_food_name)
+        }
+
         const newCalories = Math.round(food.nf_calories)
         const newProtein = Math.round(food.nf_protein)
         const newCarbs = Math.round(food.nf_total_carbohydrate)
@@ -138,7 +151,8 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
         // Set serving information
         const newServing = {
           quantity: food.serving_qty || 1,
-          unit: food.serving_unit || "serving",
+          unit: food.serving_unit || "porção",
+          originalUnit: food.original_serving_unit || food.serving_unit || "serving",
           weight: food.serving_weight_grams || 100,
         }
         setServing(newServing)
@@ -166,6 +180,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
   const handleEditMeal = (meal: any) => {
     setEditingMeal(meal)
     setMealName(meal.name)
+    setOriginalFoodName(meal.originalName || "")
     setCalories(meal.calories.toString())
     setProtein(meal.protein.toString())
     setCarbs(meal.carbs.toString())
@@ -175,7 +190,8 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
     // Set serving information
     const mealServing = meal.serving || {
       quantity: 1,
-      unit: "serving",
+      unit: "porção",
+      originalUnit: "serving",
       weight: 100,
     }
     setServing(mealServing)
@@ -190,6 +206,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
       const updatedMeal = {
         ...editingMeal,
         name: mealName,
+        originalName: originalFoodName || undefined,
         calories: Number(calories),
         protein: Number(protein) || 0,
         carbs: Number(carbs) || 0,
@@ -224,12 +241,28 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
   const dateObj = new Date(date + "T12:00:00Z")
   const formattedDate = format(dateObj, "MMMM d, yyyy")
 
+  // Helper function to translate meal types
+  const translateMealType = (type: MealType): string => {
+    switch (type) {
+      case "Breakfast":
+        return "Café da Manhã"
+      case "Lunch":
+        return "Almoço"
+      case "Dinner":
+        return "Jantar"
+      case "Snack":
+        return "Lanche"
+      default:
+        return type
+    }
+  }
+
   return (
     <div className="container">
       <div className="page-header">
-        <h1 className="page-title">Meals for {formattedDate}</h1>
+        <h1 className="page-title">Refeições para {formattedDate}</h1>
         <button className="button button-outline" onClick={() => router.push("/")}>
-          Back to Calendar
+          Voltar ao Calendário
         </button>
       </div>
 
@@ -239,8 +272,8 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
       <div className="grid-layout">
         <div className="card span-two">
           <div className="card-header">
-            <h2 className="card-title">Today's Meals</h2>
-            <p className="card-description">All meals recorded for {formattedDate}</p>
+            <h2 className="card-title">Refeições de Hoje</h2>
+            <p className="card-description">Todas as refeições registradas para {formattedDate}</p>
           </div>
           <div className="card-content">
             {Object.keys(mealsByType).length > 0 ? (
@@ -250,17 +283,17 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                     mealsByType[type] &&
                     mealsByType[type].length > 0 && (
                       <div key={type} className="meal-type-section">
-                        <h3 className="meal-type-title">{type}</h3>
+                        <h3 className="meal-type-title">{translateMealType(type)}</h3>
                         <table className="data-table">
                           <thead>
                             <tr>
                               <th style={{ width: "40px" }}></th>
-                              <th>Food</th>
-                              <th>Serving</th>
-                              <th>Calories</th>
-                              <th>Protein (g)</th>
-                              <th>Carbs (g)</th>
-                              <th>Fat (g)</th>
+                              <th>Alimento</th>
+                              <th>Porção</th>
+                              <th>Calorias</th>
+                              <th>Proteína (g)</th>
+                              <th>Carboidratos (g)</th>
+                              <th>Gordura (g)</th>
                               <th style={{ width: "80px" }}></th>
                             </tr>
                           </thead>
@@ -279,7 +312,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                                   </td>
                                   <td>{meal.name}</td>
                                   <td>
-                                    {meal.serving ? `${meal.serving.quantity} ${meal.serving.unit}` : "1 serving"}
+                                    {meal.serving ? `${meal.serving.quantity} ${meal.serving.unit}` : "1 porção"}
                                   </td>
                                   <td>{meal.calories}</td>
                                   <td>{meal.protein}</td>
@@ -290,14 +323,14 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                                       <button
                                         className="button-icon"
                                         onClick={() => handleEditMeal(meal)}
-                                        title="Edit meal"
+                                        title="Editar refeição"
                                       >
                                         <Edit className="icon-small" />
                                       </button>
                                       <button
                                         className="button-icon"
                                         onClick={() => removeMeal(meal)}
-                                        title="Delete meal"
+                                        title="Excluir refeição"
                                       >
                                         <Trash2 className="icon-small" />
                                       </button>
@@ -312,14 +345,14 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                     ),
                 )}
                 <div className="meal-totals">
-                  <h3 className="meal-type-title">Daily Totals</h3>
+                  <h3 className="meal-type-title">Totais Diários</h3>
                   <table className="data-table">
                     <thead>
                       <tr>
-                        <th>Calories</th>
-                        <th>Protein (g)</th>
-                        <th>Carbs (g)</th>
-                        <th>Fat (g)</th>
+                        <th>Calorias</th>
+                        <th>Proteína (g)</th>
+                        <th>Carboidratos (g)</th>
+                        <th>Gordura (g)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -334,15 +367,17 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                 </div>
               </div>
             ) : (
-              <p className="empty-table-message">No meals recorded for today</p>
+              <p className="empty-table-message">Nenhuma refeição registrada para hoje</p>
             )}
           </div>
         </div>
 
         <div className="card">
           <div className="card-header">
-            <h2 className="card-title">{editingMeal ? "Edit Meal" : "Add New Meal"}</h2>
-            <p className="card-description">{editingMeal ? "Update meal information" : "Record what you ate today"}</p>
+            <h2 className="card-title">{editingMeal ? "Editar Refeição" : "Adicionar Nova Refeição"}</h2>
+            <p className="card-description">
+              {editingMeal ? "Atualizar informações da refeição" : "Registre o que você comeu hoje"}
+            </p>
           </div>
           <div className="card-content">
             {!isAddingManually && !selectedFood && !editingMeal && <FoodSearch onSelectFood={handleSelectFood} />}
@@ -358,11 +393,11 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
 
                 {(altMeasures && altMeasures.length > 0) || serving ? (
                   <div className="form-group">
-                    <label className="form-label">Serving Size</label>
+                    <label className="form-label">Tamanho da Porção</label>
                     <ServingSelector
                       initialQuantity={serving.quantity}
-                      initialUnit={serving.unit}
-                      foodName={mealName}
+                      initialUnit={serving.originalUnit || serving.unit}
+                      foodName={originalFoodName || mealName}
                       altMeasures={altMeasures}
                       onServingChange={handleServingChange}
                       calories={Number(calories)}
@@ -372,7 +407,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
 
                 <div className="form-group">
                   <label htmlFor="meal-type" className="form-label">
-                    Meal Type
+                    Tipo de Refeição
                   </label>
                   <select
                     id="meal-type"
@@ -380,30 +415,30 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                     value={mealType}
                     onChange={(e) => setMealType(e.target.value as MealType)}
                   >
-                    <option value="Breakfast">Breakfast</option>
-                    <option value="Lunch">Lunch</option>
-                    <option value="Dinner">Dinner</option>
-                    <option value="Snack">Snack</option>
+                    <option value="Breakfast">Café da Manhã</option>
+                    <option value="Lunch">Almoço</option>
+                    <option value="Dinner">Jantar</option>
+                    <option value="Snack">Lanche</option>
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="meal-name" className="form-label">
-                    Food Name
+                    Nome do Alimento
                   </label>
                   <input
                     id="meal-name"
                     className="form-input"
                     value={mealName}
                     onChange={(e) => setMealName(e.target.value)}
-                    placeholder="e.g., Oatmeal, Chicken Breast"
+                    placeholder="ex: Aveia, Frango"
                   />
                 </div>
 
                 <div className="nutrition-grid">
                   <div className="form-group">
                     <label htmlFor="calories" className="form-label">
-                      Calories
+                      Calorias
                     </label>
                     <input
                       id="calories"
@@ -411,12 +446,12 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                       type="number"
                       value={calories}
                       onChange={(e) => setCalories(e.target.value)}
-                      placeholder="e.g., 500"
+                      placeholder="ex: 500"
                     />
                   </div>
                   <div className="form-group">
                     <label htmlFor="protein" className="form-label">
-                      Protein (g)
+                      Proteína (g)
                     </label>
                     <input
                       id="protein"
@@ -424,12 +459,12 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                       type="number"
                       value={protein}
                       onChange={(e) => setProtein(e.target.value)}
-                      placeholder="e.g., 20"
+                      placeholder="ex: 20"
                     />
                   </div>
                   <div className="form-group">
                     <label htmlFor="carbs" className="form-label">
-                      Carbs (g)
+                      Carboidratos (g)
                     </label>
                     <input
                       id="carbs"
@@ -437,12 +472,12 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                       type="number"
                       value={carbs}
                       onChange={(e) => setCarbs(e.target.value)}
-                      placeholder="e.g., 50"
+                      placeholder="ex: 50"
                     />
                   </div>
                   <div className="form-group">
                     <label htmlFor="fat" className="form-label">
-                      Fat (g)
+                      Gordura (g)
                     </label>
                     <input
                       id="fat"
@@ -450,7 +485,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                       type="number"
                       value={fat}
                       onChange={(e) => setFat(e.target.value)}
-                      placeholder="e.g., 15"
+                      placeholder="ex: 15"
                     />
                   </div>
                 </div>
@@ -462,12 +497,13 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
             <div className="form-actions">
               {!isAddingManually && !selectedFood && !editingMeal ? (
                 <button className="button button-outline full-width" onClick={() => setIsAddingManually(true)}>
-                  <Plus className="icon-small" /> Add Food Manually
+                  <Plus className="icon-small"  onClick={() => setIsAddingManually(true)}>
+                  <Plus className="icon-small" /> Adicionar Alimento Manualmente
                 </button>
               ) : (
                 <>
                   <button className="button button-outline" onClick={resetForm}>
-                    <X className="icon-small" /> Cancel
+                    <X className="icon-small" /> Cancelar
                   </button>
                   <button
                     className="button button-primary"
@@ -478,11 +514,11 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                       <Loader2 className="icon-small animate-spin" />
                     ) : editingMeal ? (
                       <>
-                        <Check className="icon-small" /> Update Meal
+                        <Check className="icon-small" /> Atualizar Refeição
                       </>
                     ) : (
                       <>
-                        <Plus className="icon-small" /> Add Meal
+                        <Plus className="icon-small" /> Adicionar Refeição
                       </>
                     )}
                   </button>

@@ -3,10 +3,11 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Search, Loader2, AlertCircle } from "lucide-react"
+import { Search, Loader2, AlertCircle, Globe } from "lucide-react"
 
 interface FoodItem {
   food_name: string
+  original_food_name?: string
   nix_item_id?: string
   nf_calories?: number
   photo?: {
@@ -15,7 +16,7 @@ interface FoodItem {
 }
 
 interface FoodSearchProps {
-  onSelectFood: (foodName: string) => void
+  onSelectFood: (foodName: string, originalFoodName?: string) => void
 }
 
 export function FoodSearch({ onSelectFood }: FoodSearchProps) {
@@ -23,6 +24,11 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
   const [results, setResults] = useState<FoodItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [translationInfo, setTranslationInfo] = useState<{
+    original: string
+    translated: string
+    wasTranslated: boolean
+  } | null>(null)
 
   const searchFood = async () => {
     if (!query.trim()) return
@@ -30,8 +36,11 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
     setLoading(true)
     setError(null)
     setResults([])
+    setTranslationInfo(null)
 
     try {
+      console.log("Searching for food with query:", query)
+
       const response = await fetch("/api/nutritionix/search", {
         method: "POST",
         headers: {
@@ -40,19 +49,36 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
         body: JSON.stringify({ query }),
       })
 
-      const data = await response.json()
+      console.log("Search response status:", response.status)
+
+      let data
+      try {
+        data = await response.json()
+      } catch (e) {
+        console.error("Failed to parse response:", e)
+        const text = await response.text()
+        console.error("Received non-JSON response:", text)
+        throw new Error("Received invalid response format from server")
+      }
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to search for food")
       }
 
+      console.log("Search results:", data)
+
       // Combine common foods and branded foods
       const combinedResults = [...(data.common || []), ...(data.branded || [])].slice(0, 10) // Limit to 10 results for better UX
 
       setResults(combinedResults)
+
+      // Set translation info if available
+      if (data.translation && data.translation.wasTranslated) {
+        setTranslationInfo(data.translation)
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred while searching for food")
       console.error("Error searching for food:", err)
+      setError(err instanceof Error ? err.message : "An error occurred while searching for food")
     } finally {
       setLoading(false)
     }
@@ -63,6 +89,11 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
     searchFood()
   }
 
+  const handleSelectFood = (item: FoodItem) => {
+    // Pass both the translated and original food name
+    onSelectFood(item.food_name, item.original_food_name)
+  }
+
   return (
     <div className="food-search">
       <form onSubmit={handleSubmit} className="search-form">
@@ -71,14 +102,23 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search for a food (e.g., apple, chicken breast)"
+            placeholder="Search for a food (e.g., frango, maçã)"
             className="form-input"
           />
-          <button type="submit" className="button button-primary search-button">
+          <button type="submit" className="button button-primary search-button" disabled={loading}>
             {loading ? <Loader2 className="icon-small animate-spin" /> : <Search className="icon-small" />}
           </button>
         </div>
       </form>
+
+      {translationInfo && translationInfo.wasTranslated && (
+        <div className="translation-info">
+          <Globe className="icon-small" />
+          <span>
+            Translated: "{translationInfo.original}" → "{translationInfo.translated}"
+          </span>
+        </div>
+      )}
 
       {error && (
         <div className="error-message">
@@ -92,7 +132,7 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
           <h3 className="results-title">Search Results</h3>
           <ul className="results-list">
             {results.map((item, index) => (
-              <li key={index} className="result-item" onClick={() => onSelectFood(item.food_name)}>
+              <li key={index} className="result-item" onClick={() => handleSelectFood(item)}>
                 <div className="result-content">
                   {item.photo?.thumb && (
                     <img src={item.photo.thumb || "/placeholder.svg"} alt={item.food_name} className="food-thumbnail" />
@@ -108,6 +148,20 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
         </div>
       )}
 
+      {loading && results.length === 0 && !error && (
+        <div className="loading-container">
+          <Loader2 className="icon-medium animate-spin" />
+          <p>Searching for foods...</p>
+        </div>
+      )}
+
+      {!loading && results.length === 0 && query.trim() !== "" && !error && (
+        <div className="no-results">
+          <p>No foods found matching "{query}"</p>
+          <p className="suggestion">Try a different search term or check your spelling</p>
+        </div>
+      )}
+
       <style jsx>{`
         .food-search {
           margin-bottom: 1.5rem;
@@ -118,7 +172,7 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
         .search-input-container {
           display: flex;
           gap: 0.5rem;
-          width: 100%; /* Make it take full width of parent */
+          width: 100%;
           max-width: 100%;
         }
         .search-button {
@@ -131,6 +185,17 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
           flex: 1;
           min-width: 0;
           width: 100%;
+        }
+        .translation-info {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 1rem;
+          font-size: 0.875rem;
+          color: var(--color-secondary);
+          padding: 0.5rem;
+          background-color: rgba(99, 102, 241, 0.1);
+          border-radius: var(--border-radius);
         }
         .error-message {
           color: var(--color-error);
@@ -189,6 +254,28 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
         .food-calories {
           font-size: 0.75rem;
           color: var(--color-muted);
+        }
+        .loading-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 2rem;
+          color: var(--color-muted);
+        }
+        .icon-medium {
+          width: 2rem;
+          height: 2rem;
+          margin-bottom: 1rem;
+        }
+        .no-results {
+          text-align: center;
+          padding: 1.5rem;
+          color: var(--color-muted);
+        }
+        .suggestion {
+          font-size: 0.875rem;
+          margin-top: 0.5rem;
         }
       `}</style>
     </div>

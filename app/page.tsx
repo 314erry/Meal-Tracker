@@ -303,7 +303,7 @@ export default function Home() {
         <div className="card">
           <div className="card-header">
             <h2 className="card-title">Caloric Goal Adherence</h2>
-            <p className="card-description">How well you're meeting your targets</p>
+            <p className="card-description">How well you're meeting your weekly target</p>
           </div>
           <div
             className="card-content adherence-container"
@@ -313,7 +313,7 @@ export default function Home() {
             <p className="card-description" style={{ textAlign: "center", marginTop: "1rem" }}>
               {totalCalories > 0 ? (
                 <>
-                  of {totalTarget} calorie goal met
+                  of {totalTarget} weekly calorie goal met
                   <br />
                   <span className="adherence-detail">
                     ({totalCalories} / {totalTarget} calories)

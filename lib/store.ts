@@ -9,11 +9,13 @@ export interface ServingInfo {
   quantity: number
   unit: string
   weight: number
+  originalUnit?: string // Add original English unit
 }
 
 export interface Meal {
   date: string
   name: string
+  originalName?: string // Add original English name
   calories: number
   protein: number
   carbs: number
@@ -24,6 +26,7 @@ export interface Meal {
   altMeasures?: Array<{
     serving_weight: number
     measure: string
+    original_measure?: string // Add original English measure
     seq: number | null
     qty: number
   }>
@@ -46,7 +49,8 @@ const yesterdayStr = new Date(today.setDate(today.getDate() - 1)).toISOString().
 const initialMeals: Meal[] = [
   {
     date: todayStr,
-    name: "Oatmeal with Berries",
+    name: "Aveia com Frutas Vermelhas",
+    originalName: "Oatmeal with Berries",
     calories: 450,
     protein: 20,
     carbs: 50,
@@ -54,13 +58,15 @@ const initialMeals: Meal[] = [
     mealType: "Breakfast",
     serving: {
       quantity: 1,
-      unit: "bowl",
+      unit: "tigela",
+      originalUnit: "bowl",
       weight: 240,
     },
   },
   {
     date: todayStr,
-    name: "Grilled Chicken Salad",
+    name: "Salada de Frango Grelhado",
+    originalName: "Grilled Chicken Salad",
     calories: 650,
     protein: 35,
     carbs: 70,
@@ -68,13 +74,15 @@ const initialMeals: Meal[] = [
     mealType: "Lunch",
     serving: {
       quantity: 1,
-      unit: "serving",
+      unit: "porção",
+      originalUnit: "serving",
       weight: 350,
     },
   },
   {
     date: yesterdayStr,
-    name: "Salmon with Vegetables",
+    name: "Salmão com Legumes",
+    originalName: "Salmon with Vegetables",
     calories: 550,
     protein: 30,
     carbs: 45,
@@ -82,7 +90,8 @@ const initialMeals: Meal[] = [
     mealType: "Dinner",
     serving: {
       quantity: 1,
-      unit: "plate",
+      unit: "prato",
+      originalUnit: "plate",
       weight: 300,
     },
   },

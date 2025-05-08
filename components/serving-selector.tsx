@@ -13,6 +13,7 @@ interface ServingSelectorProps {
   altMeasures?: Array<{
     serving_weight: number
     measure: string
+    original_measure?: string
     seq: number | null
     qty: number
   }>
@@ -51,6 +52,15 @@ export function ServingSelector({
       setError(null)
 
       try {
+        // Find the original measure if available
+        let originalMeasure = newUnit
+        if (altMeasures) {
+          const measureObj = altMeasures.find((m) => m.measure === newUnit || m.original_measure === newUnit)
+          if (measureObj && measureObj.original_measure) {
+            originalMeasure = measureObj.original_measure
+          }
+        }
+
         const response = await fetch("/api/nutritionix/measure", {
           method: "POST",
           headers: {
@@ -58,7 +68,7 @@ export function ServingSelector({
           },
           body: JSON.stringify({
             foodName,
-            measure: newUnit,
+            measure: originalMeasure, // Always use the original English measure for API calls
             quantity: newQuantity,
           }),
         })
@@ -80,10 +90,14 @@ export function ServingSelector({
           // Find the serving weight for this measure
           const servingWeight = food.serving_weight_grams || 100
 
+          // Get the translated unit from the response
+          const translatedUnit = food.serving_unit || newUnit
+
           // Create the serving info object
           const newServing: ServingInfo = {
             quantity: newQuantity,
-            unit: newUnit,
+            unit: translatedUnit,
+            originalUnit: food.original_serving_unit || originalMeasure, // Store original English unit
             weight: servingWeight,
           }
 
@@ -104,7 +118,7 @@ export function ServingSelector({
         setLoading(false)
       }
     },
-    [foodName, onServingChange],
+    [foodName, onServingChange, altMeasures],
   )
 
   // Update nutrition when quantity or unit changes
@@ -147,9 +161,9 @@ export function ServingSelector({
         </div>
         <div className="unit-select">
           <select value={unit} onChange={handleUnitChange} className="form-input">
-            <option value="serving">serving</option>
+            <option value="serving">porção</option>
             {altMeasures?.map((measure, index) => (
-              <option key={index} value={measure.measure}>
+              <option key={index} value={measure.original_measure || measure.measure}>
                 {measure.measure}
               </option>
             ))}
