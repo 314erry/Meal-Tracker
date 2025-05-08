@@ -26,20 +26,33 @@ export default function ReportsPage() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"))
   const [chartData, setChartData] = useState<{ pie: any; bar: any }>({ pie: null, bar: null })
 
+  // Get available months from meal data
   const availableMonths = [...new Set(meals.map((meal) => meal.date.substring(0, 7)))].sort()
+
+  // If no months with data, default to current month
+  useEffect(() => {
+    if (availableMonths.length > 0 && !availableMonths.includes(selectedMonth)) {
+      setSelectedMonth(availableMonths[availableMonths.length - 1])
+    }
+  }, [availableMonths, selectedMonth])
+
+  // Filter meals for selected month
   const monthMeals = meals.filter((meal) => meal.date.startsWith(selectedMonth))
 
+  // Calculate nutrition totals
   const totalCalories = monthMeals.reduce((sum, meal) => sum + meal.calories, 0)
   const totalProtein = monthMeals.reduce((sum, meal) => sum + meal.protein, 0)
   const totalCarbs = monthMeals.reduce((sum, meal) => sum + meal.carbs, 0)
   const totalFat = monthMeals.reduce((sum, meal) => sum + meal.fat, 0)
 
-  const daysInMonth = monthMeals.length > 0 ? new Set(monthMeals.map((meal) => meal.date)).size : 1
-  const avgCaloriesPerDay = Math.round(totalCalories / daysInMonth)
-  const avgProteinPerDay = Math.round(totalProtein / daysInMonth)
-  const avgCarbsPerDay = Math.round(totalCarbs / daysInMonth)
-  const avgFatPerDay = Math.round(totalFat / daysInMonth)
+  // Calculate averages
+  const daysWithMeals = monthMeals.length > 0 ? new Set(monthMeals.map((meal) => meal.date)).size : 1
+  const avgCaloriesPerDay = Math.round(totalCalories / daysWithMeals)
+  const avgProteinPerDay = Math.round(totalProtein / daysWithMeals)
+  const avgCarbsPerDay = Math.round(totalCarbs / daysWithMeals)
+  const avgFatPerDay = Math.round(totalFat / daysWithMeals)
 
+  // Calculate adherence
   const calorieTarget = 2000
   const daysInSelectedMonth = selectedMonth
     ? eachDayOfInterval({
@@ -48,8 +61,11 @@ export default function ReportsPage() {
       }).length
     : 30
 
-  const adherenceRate = Math.min(100, Math.round((totalCalories / (calorieTarget * daysInSelectedMonth)) * 100))
+  const totalMonthlyTarget = calorieTarget * daysInSelectedMonth
+  const adherenceRate =
+    totalMonthlyTarget > 0 ? Math.min(100, Math.round((totalCalories / totalMonthlyTarget) * 100)) : 0
 
+  // Prepare daily data for chart
   const dailyData = selectedMonth
     ? eachDayOfInterval({
         start: startOfMonth(new Date(`${selectedMonth}-01T12:00:00Z`)),
@@ -66,18 +82,24 @@ export default function ReportsPage() {
       })
     : []
 
+  // Update chart data when meals or selected month changes
   useEffect(() => {
-    const pieData = {
-      labels: ["Protein", "Carbs", "Fat"],
-      datasets: [
-        {
-          data: [totalProtein, totalCarbs, totalFat],
-          backgroundColor: ["#10b981", "#3b82f6", "#f59e0b"],
-          borderColor: ["#059669", "#2563eb", "#d97706"],
-          borderWidth: 1,
-        },
-      ],
-    }
+    // Only create pie chart if there's data
+    const hasMacroData = totalProtein > 0 || totalCarbs > 0 || totalFat > 0
+
+    const pieData = hasMacroData
+      ? {
+          labels: ["Protein", "Carbs", "Fat"],
+          datasets: [
+            {
+              data: [totalProtein, totalCarbs, totalFat],
+              backgroundColor: ["#10b981", "#3b82f6", "#f59e0b"],
+              borderColor: ["#059669", "#2563eb", "#d97706"],
+              borderWidth: 1,
+            },
+          ],
+        }
+      : null
 
     const barData = {
       labels: dailyData.map((item) => item.date),
@@ -100,7 +122,7 @@ export default function ReportsPage() {
     }
 
     setChartData({ pie: pieData, bar: barData })
-  }, [selectedMonth, meals])
+  }, [selectedMonth, meals, totalProtein, totalCarbs, totalFat])
 
   const DonutProgress = ({ percentage }: { percentage: number }) => {
     const radius = 60
@@ -141,6 +163,9 @@ export default function ReportsPage() {
     )
   }
 
+  // Determine if we have enough data to show the pie chart
+  const hasMacroData = totalProtein > 0 || totalCarbs > 0 || totalFat > 0
+
   return (
     <div className="container">
       <div className="page-header">
@@ -173,47 +198,54 @@ export default function ReportsPage() {
             </p>
           </div>
           <div className="card-content">
-            <div className="nutrition-summary">
-              <div className="nutrition-item">
-                <div className="nutrition-icon calories">
-                  <span>{totalCalories}</span>
+            {monthMeals.length > 0 ? (
+              <div className="nutrition-summary">
+                <div className="nutrition-item">
+                  <div className="nutrition-icon calories">
+                    <span>{totalCalories}</span>
+                  </div>
+                  <div className="nutrition-details">
+                    <h3>Total Calories</h3>
+                    <p>{avgCaloriesPerDay} per day</p>
+                  </div>
                 </div>
-                <div className="nutrition-details">
-                  <h3>Total Calories</h3>
-                  <p>{avgCaloriesPerDay} per day</p>
-                </div>
-              </div>
 
-              <div className="nutrition-item">
-                <div className="nutrition-icon protein">
-                  <span>{totalProtein}g</span>
+                <div className="nutrition-item">
+                  <div className="nutrition-icon protein">
+                    <span>{totalProtein}g</span>
+                  </div>
+                  <div className="nutrition-details">
+                    <h3>Total Protein</h3>
+                    <p>{avgProteinPerDay}g per day</p>
+                  </div>
                 </div>
-                <div className="nutrition-details">
-                  <h3>Total Protein</h3>
-                  <p>{avgProteinPerDay}g per day</p>
-                </div>
-              </div>
 
-              <div className="nutrition-item">
-                <div className="nutrition-icon carbs">
-                  <span>{totalCarbs}g</span>
+                <div className="nutrition-item">
+                  <div className="nutrition-icon carbs">
+                    <span>{totalCarbs}g</span>
+                  </div>
+                  <div className="nutrition-details">
+                    <h3>Total Carbs</h3>
+                    <p>{avgCarbsPerDay}g per day</p>
+                  </div>
                 </div>
-                <div className="nutrition-details">
-                  <h3>Total Carbs</h3>
-                  <p>{avgCarbsPerDay}g per day</p>
-                </div>
-              </div>
 
-              <div className="nutrition-item">
-                <div className="nutrition-icon fat">
-                  <span>{totalFat}g</span>
-                </div>
-                <div className="nutrition-details">
-                  <h3>Total Fat</h3>
-                  <p>{avgFatPerDay}g per day</p>
+                <div className="nutrition-item">
+                  <div className="nutrition-icon fat">
+                    <span>{totalFat}g</span>
+                  </div>
+                  <div className="nutrition-details">
+                    <h3>Total Fat</h3>
+                    <p>{avgFatPerDay}g per day</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="empty-data-message">
+                <p>No meal data available for this month</p>
+                <p>Add meals to see your nutrition summary</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -225,32 +257,33 @@ export default function ReportsPage() {
             <p className="card-description">Monthly breakdown of protein, carbs, and fat</p>
           </div>
           <div className="card-content chart-container">
-            {totalProtein + totalCarbs + totalFat > 0 ? (
-              chartData.pie && (
-                <Pie
-                  data={chartData.pie}
-                  options={{
-                    responsive: true,
-                    plugins: {
-                      legend: {
-                        position: "bottom",
-                      },
-                      tooltip: {
-                        callbacks: {
-                          label: (context) => {
-                            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
-                            const value = context.raw as number
-                            const percentage = Math.round((value / total) * 100)
-                            return `${context.label}: ${value}g (${percentage}%)`
-                          },
+            {hasMacroData && chartData.pie ? (
+              <Pie
+                data={chartData.pie}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      position: "bottom",
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: (context) => {
+                          const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
+                          const value = context.raw as number
+                          const percentage = total > 0 ? Math.round((value / total) * 100) : 0
+                          return `${context.label}: ${value}g (${percentage}%)`
                         },
                       },
                     },
-                  }}
-                />
-              )
+                  },
+                }}
+              />
             ) : (
-              <p className="empty-message">No meal data available</p>
+              <div className="empty-chart-message">
+                <p>No macronutrient data available</p>
+                <p className="empty-chart-subtitle">Add meals to see your macronutrient distribution</p>
+              </div>
             )}
           </div>
         </div>
@@ -274,7 +307,17 @@ export default function ReportsPage() {
           >
             <DonutProgress percentage={adherenceRate} />
             <p className="adherence-description" style={{ textAlign: "center", marginTop: "1rem" }}>
-              of {calorieTarget * daysInSelectedMonth} calorie monthly goal
+              {totalCalories > 0 ? (
+                <>
+                  of {totalMonthlyTarget} calorie monthly goal
+                  <br />
+                  <span className="adherence-detail">
+                    ({totalCalories} / {totalMonthlyTarget} calories)
+                  </span>
+                </>
+              ) : (
+                "No calorie data available"
+              )}
             </p>
           </div>
         </div>
@@ -289,7 +332,7 @@ export default function ReportsPage() {
             </p>
           </div>
           <div className="card-content chart-container">
-            {chartData.bar && (
+            {chartData.bar ? (
               <Bar
                 data={chartData.bar}
                 options={{
@@ -320,6 +363,10 @@ export default function ReportsPage() {
                   },
                 }}
               />
+            ) : (
+              <div className="empty-chart-message">
+                <p>No calorie data available</p>
+              </div>
             )}
           </div>
         </div>
@@ -333,40 +380,60 @@ export default function ReportsPage() {
           </p>
         </div>
         <div className="card-content">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Meal</th>
-                <th>Calories</th>
-                <th>Protein (g)</th>
-                <th>Carbs (g)</th>
-                <th>Fat (g)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {monthMeals.length > 0 ? (
-                monthMeals.map((meal, index) => (
+          {monthMeals.length > 0 ? (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Meal</th>
+                  <th>Type</th>
+                  <th>Calories</th>
+                  <th>Protein (g)</th>
+                  <th>Carbs (g)</th>
+                  <th>Fat (g)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthMeals.map((meal, index) => (
                   <tr key={index}>
                     <td>{format(new Date(meal.date + "T12:00:00Z"), "MM/dd/yyyy")}</td>
                     <td>{meal.name}</td>
+                    <td>{meal.mealType}</td>
                     <td>{meal.calories}</td>
                     <td>{meal.protein}</td>
                     <td>{meal.carbs}</td>
                     <td>{meal.fat}</td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="empty-table-message">
-                    No meals recorded for this month
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="empty-table-message">No meals recorded for this month</div>
+          )}
         </div>
       </div>
+
+      <style jsx>{`
+        .empty-chart-message {
+          text-align: center;
+          color: var(--color-muted);
+          font-size: 0.9rem;
+          padding: 2rem 0;
+        }
+        .empty-chart-subtitle {
+          font-size: 0.8rem;
+          margin-top: 0.5rem;
+        }
+        .empty-data-message {
+          text-align: center;
+          color: var(--color-muted);
+          padding: 2rem 0;
+        }
+        .adherence-detail {
+          font-size: 0.8rem;
+          color: var(--color-muted);
+        }
+      `}</style>
     </div>
   )
 }

@@ -473,3 +473,89 @@ body {
   color: var(--color-muted);
   margin: 0.25rem 0 0 0;
 }
+
+/* Serving selector styles */
+.serving-selector {
+  margin-bottom: 1rem;
+}
+
+.serving-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quantity-input {
+  width: 80px;
+}
+
+.unit-select {
+  flex: 1;
+}
+
+.calories-display {
+  font-weight: 600;
+  min-width: 80px;
+  text-align: right;
+}
+
+.calorie-unit {
+  color: var(--color-muted);
+  margin-left: 4px;
+  font-size: 0.9em;
+}
+
+/* Empty chart message */
+.empty-chart-message {
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  padding: 2rem 0;
+}
+
+.empty-chart-subtitle {
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.empty-data-message {
+  text-align: center;
+  color: var(--color-muted);
+  padding: 2rem 0;
+}
+
+.adherence-detail {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+/* API Status Checker */
+.api-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  transition: opacity 0.5s ease-out;
+}
+
+.api-status.checking {
+  background-color: rgba(99, 102, 241, 0.1);
+  color: var(--color-secondary);
+}
+
+.api-status.success {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--color-success);
+}
+
+.api-status.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+}
+
+.api-status.fade-out {
+  opacity: 0;
+}

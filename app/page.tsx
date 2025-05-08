@@ -35,6 +35,13 @@ export default function Home() {
     router.push(`/day/${selectedDateStr}`)
   }
 
+  // Calculate totals based on current meals
+  const totalProtein = meals.reduce((sum, meal) => sum + meal.protein, 0)
+  const totalCarbs = meals.reduce((sum, meal) => sum + meal.carbs, 0)
+  const totalFat = meals.reduce((sum, meal) => sum + meal.fat, 0)
+  const totalCalories = meals.reduce((sum, meal) => sum + meal.calories, 0)
+
+  // Get dates for the last 7 days
   const today = new Date()
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date()
@@ -42,24 +49,25 @@ export default function Home() {
     return format(date, "yyyy-MM-dd")
   }).reverse()
 
+  // Calculate calorie data for each day without random values
   const calorieData = last7Days.map((day) => {
     const dayMeals = meals.filter((meal) => meal.date === day)
     const calories = dayMeals.reduce((sum, meal) => sum + meal.calories, 0)
     return {
       date: format(new Date(day + "T12:00:00Z"), "MM/dd"),
       calories,
-      target: 2000,
+      target: 2000, // Daily calorie target
     }
   })
 
-  const totalProtein = meals.reduce((sum, meal) => sum + meal.protein, 0)
-  const totalCarbs = meals.reduce((sum, meal) => sum + meal.carbs, 0)
-  const totalFat = meals.reduce((sum, meal) => sum + meal.fat, 0)
-  const totalCalories = meals.reduce((sum, meal) => sum + meal.calories, 0)
+  // Calculate adherence rate based on actual data
+  const calorieTarget = 2000 // Daily calorie target
+  const totalTarget = calorieTarget * last7Days.length
+  const adherenceRate = totalTarget > 0 ? Math.min(100, Math.round((totalCalories / totalTarget) * 100)) : 0
 
-  const adherenceRate = Math.min(100, Math.round((totalCalories / (2000 * last7Days.length)) * 100))
-
+  // Update chart data whenever meals change
   useEffect(() => {
+    // Only create pie chart if there's actual data
     const pieData = {
       labels: ["Protein", "Carbs", "Fat"],
       datasets: [
@@ -85,7 +93,7 @@ export default function Home() {
         },
         {
           label: "Target",
-          data: calorieData.map((item) => item.target),
+          data: calorieData.map(() => calorieTarget),
           borderColor: "#6366f1",
           borderDash: [5, 5],
           backgroundColor: "transparent",
@@ -96,7 +104,7 @@ export default function Home() {
     }
 
     setChartData({ pie: pieData, line: lineData })
-  }, [meals])
+  }, [meals, totalProtein, totalCarbs, totalFat]) // Include all dependencies
 
   const DonutProgress = ({ percentage }: { percentage: number }) => {
     const radius = 60
@@ -137,6 +145,9 @@ export default function Home() {
     )
   }
 
+  // Determine if we have enough data to show the pie chart
+  const hasMacroData = totalProtein > 0 || totalCarbs > 0 || totalFat > 0
+
   return (
     <div className="container">
       <h1 className="page-title">Meal Tracker</h1>
@@ -166,7 +177,7 @@ export default function Home() {
             className="card-content chart-container"
             style={{ display: "flex", justifyContent: "center", alignItems: "center", flex: 1, padding: "1.25rem" }}
           >
-            {chartData.pie && (
+            {hasMacroData && chartData.pie ? (
               <div style={{ width: "80%", maxWidth: "250px" }}>
                 <Pie
                   data={chartData.pie}
@@ -187,7 +198,7 @@ export default function Home() {
                           label: (context) => {
                             const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
                             const value = context.raw as number
-                            const percentage = Math.round((value / total) * 100)
+                            const percentage = total > 0 ? Math.round((value / total) * 100) : 0
                             return `${context.label}: ${value}g (${percentage}%)`
                           },
                         },
@@ -195,6 +206,11 @@ export default function Home() {
                     },
                   }}
                 />
+              </div>
+            ) : (
+              <div className="empty-chart-message">
+                <p>No macronutrient data available</p>
+                <p className="empty-chart-subtitle">Add meals to see your macronutrient distribution</p>
               </div>
             )}
           </div>
@@ -208,7 +224,7 @@ export default function Home() {
             <p className="card-description">Comparing daily consumption with target</p>
           </div>
           <div className="card-content chart-container">
-            {chartData.line && (
+            {chartData.line ? (
               <Line
                 data={chartData.line}
                 options={{
@@ -228,6 +244,10 @@ export default function Home() {
                   },
                 }}
               />
+            ) : (
+              <div className="empty-chart-message">
+                <p>No calorie data available</p>
+              </div>
             )}
           </div>
         </div>
@@ -245,6 +265,7 @@ export default function Home() {
                 <tr>
                   <th>Date</th>
                   <th>Meal</th>
+                  <th>Type</th>
                   <th>Calories</th>
                   <th>Protein</th>
                   <th>Carbs</th>
@@ -257,6 +278,7 @@ export default function Home() {
                     <tr key={index}>
                       <td>{format(new Date(meal.date + "T12:00:00Z"), "MM/dd/yyyy")}</td>
                       <td>{meal.name}</td>
+                      <td>{meal.mealType}</td>
                       <td>{meal.calories}</td>
                       <td>{meal.protein}g</td>
                       <td>{meal.carbs}g</td>
@@ -265,7 +287,7 @@ export default function Home() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="empty-table-message">
+                    <td colSpan={7} className="empty-table-message">
                       No meals recorded. Add your first meal by selecting a day!
                     </td>
                   </tr>
@@ -281,19 +303,45 @@ export default function Home() {
         <div className="card">
           <div className="card-header">
             <h2 className="card-title">Caloric Goal Adherence</h2>
-            <p className="card-description">How well you're meeting your targets</p>
+            <p className="card-description">How well you're meeting your weekly target</p>
           </div>
           <div
             className="card-content adherence-container"
             style={{ display: "flex", justifyContent: "center", alignItems: "center" }}
           >
             <DonutProgress percentage={adherenceRate} />
-            <p className="adherence-description" style={{ textAlign: "center", marginTop: "1rem" }}>
-              of calorie goal met
+            <p className="card-description" style={{ textAlign: "center", marginTop: "1rem" }}>
+              {totalCalories > 0 ? (
+                <>
+                  of {totalTarget} weekly calorie goal met
+                  <br />
+                  <span className="adherence-detail">
+                    ({totalCalories} / {totalTarget} calories)
+                  </span>
+                </>
+              ) : (
+                "No calorie data available"
+              )}
             </p>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .empty-chart-message {
+          text-align: center;
+          color: var(--color-muted);
+          font-size: 0.9rem;
+        }
+        .empty-chart-subtitle {
+          font-size: 0.8rem;
+          margin-top: 0.5rem;
+        }
+        .adherence-detail {
+          font-size: 0.8rem;
+          color: var(--color-muted);
+        }
+      `}</style>
     </div>
   )
 }
