@@ -11,17 +11,16 @@ import { ApiStatusChecker } from "@/components/api-status-checker"
 
 
 export default function DayPage({ params }: { params: Promise<{ date: string }> }) {
-  const { date } = use(params) // This is the new recommended way
+  const { date } = use(params) 
   const router = useRouter()
   const { meals, addMeal, removeMeal, updateMeal } = useMealStore()
 
-  // Log the date parameter for debugging
   useEffect(() => {
     console.log("Date parameter in DayPage:", date)
   }, [date])
 
   const [mealName, setMealName] = useState("")
-  const [originalFoodName, setOriginalFoodName] = useState("") // Store original English food name
+  const [originalFoodName, setOriginalFoodName] = useState("")
   const [calories, setCalories] = useState("")
   const [protein, setProtein] = useState("")
   const [carbs, setCarbs] = useState("")
@@ -42,7 +41,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
 
   const dayMeals = meals.filter((meal) => meal.date === date)
 
-  // Group meals by type
+  // Grupo de refeições por tipo
   const mealsByType = dayMeals.reduce(
     (acc, meal) => {
       if (!acc[meal.mealType]) {
@@ -54,7 +53,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
     {} as Record<MealType, typeof dayMeals>,
   )
 
-  // Calculate totals
+  // Calcular totais
   const totalCalories = dayMeals.reduce((sum, meal) => sum + meal.calories, 0)
   const totalProtein = dayMeals.reduce((sum, meal) => sum + meal.protein, 0)
   const totalCarbs = dayMeals.reduce((sum, meal) => sum + meal.carbs, 0)
@@ -62,13 +61,12 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
 
   const handleAddMeal = () => {
     if (mealName && calories) {
-      // Log the meal being added
-      console.log("Adding meal for date:", date)
+      console.log("Adicionar uma refeição para data:", date)
 
       addMeal({
         date,
         name: mealName,
-        originalName: originalFoodName || undefined, // Store original English name
+        originalName: originalFoodName || undefined,
         calories: Number(calories),
         protein: Number(protein) || 0,
         carbs: Number(carbs) || 0,
@@ -79,7 +77,6 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
         imageUrl: foodImage || undefined,
       })
 
-      // Reset form
       resetForm()
     }
   }
@@ -108,7 +105,6 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
     setLoading(true)
     setError(null)
 
-    // Store the original English food name if provided
     if (originalName) {
       setOriginalFoodName(originalName)
     }
@@ -124,7 +120,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to get nutrition information")
+        throw new Error(errorData.error || "Falha ao obter informações")
       }
 
       const data = await response.json()
