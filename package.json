@@ -58,11 +58,11 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.6",
     "zod": "^3.24.1",
+    "chart.js": "latest",
     "immer": "latest",
     "use-sync-external-store": "latest",
-    "chart.js": "latest",
-    "zustand": "latest",
-    "react-chartjs-2": "latest"
+    "react-chartjs-2": "latest",
+    "zustand": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
