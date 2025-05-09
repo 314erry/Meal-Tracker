@@ -130,7 +130,6 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
 
         setMealName(food.food_name)
 
-        // Store original English name if available
         if (food.original_food_name) {
           setOriginalFoodName(food.original_food_name)
         }
@@ -145,7 +144,6 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
         setCarbs(newCarbs.toString())
         setFat(newFat.toString())
 
-        // Set serving information
         const newServing = {
           quantity: food.serving_qty || 1,
           unit: food.serving_unit || "porção",
@@ -154,21 +152,20 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
         }
         setServing(newServing)
 
-        // Set alternative measures if available
         if (food.alt_measures && food.alt_measures.length > 0) {
           setAltMeasures(food.alt_measures)
         }
 
-        // Set food image if available
+        // Mostra foto da comida, se disponível
         if (food.photo && food.photo.thumb) {
           setFoodImage(food.photo.thumb)
         }
       } else {
-        throw new Error("No nutrition data found for this food")
+        throw new Error("Não foram encontrados dados nutricionais para essa comida")
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
-      console.error("Error getting nutrition information:", err)
+      setError(err instanceof Error ? err.message : "Ocorreu um erro")
+      console.error("Erro recuperando informações:", err)
     } finally {
       setLoading(false)
     }
@@ -184,7 +181,6 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
     setFat(meal.fat.toString())
     setMealType(meal.mealType)
 
-    // Set serving information
     const mealServing = meal.serving || {
       quantity: 1,
       unit: "porção",
@@ -221,10 +217,10 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
 
   const handleServingChange = useCallback(
     (newServing: ServingInfo, nutritionData: { calories: number; protein: number; carbs: number; fat: number }) => {
-      // Update serving information
+      // Atualiza informações
       setServing(newServing)
 
-      // Update nutrition values with data from the API
+      // Atualização dos dados via API
       setCalories(nutritionData.calories.toString())
       setProtein(nutritionData.protein.toString())
       setCarbs(nutritionData.carbs.toString())
@@ -233,12 +229,9 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
     [],
   )
 
-  // Parse the date string to create a Date object for formatting
-  // Add T12:00:00Z to ensure consistent timezone handling
   const dateObj = new Date(date + "T12:00:00Z")
   const formattedDate = format(dateObj, "MMMM d, yyyy")
 
-  // Helper function to translate meal types
   const translateMealType = (type: MealType): string => {
     switch (type) {
       case "Breakfast":
