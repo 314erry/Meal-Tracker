@@ -150,19 +150,20 @@ export default function Home() {
 
   return (
     <div className="container">
-      <h1 className="page-title">Meal Tracker</h1>
+      <h1 className="page-title">Registrador de Refeição</h1>
 
       <div className="grid-layout" style={{ alignItems: "stretch" }}>
         <div className="card" style={{ display: "flex", flexDirection: "column", height: "450px" }}>
           <div className="card-header">
-            <h2 className="card-title">Calendar</h2>
-            <p className="card-description">Select a day to add meals</p>
+            <h2 className="card-title">Calendário</h2>
+            <p className="card-description">
+            Selecione um dia para adicionar refeições</p>
           </div>
           <div className="card-content" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <div style={{ marginBottom: "1rem", transform: "scale(0.85)", transformOrigin: "top center" }}>
               <BasicCalendar selectedDateStr={selectedDateStr} onSelectDate={handleDateSelect} />
               <button className="button button-primary full-width" onClick={goToMealEntry}>
-                Add Meals for {format(selectedDate, "MMMM d, yyyy")}
+              Adicionar refeições para {format(selectedDate, "MMMM d, yyyy")}
               </button>
             </div>
           </div>
@@ -170,8 +171,8 @@ export default function Home() {
 
         <div className="card" style={{ display: "flex", flexDirection: "column", height: "450px" }}>
           <div className="card-header">
-            <h2 className="card-title">Macronutrient Distribution</h2>
-            <p className="card-description">Percentage of protein, carbs, and fat</p>
+            <h2 className="card-title">Distribuição de Macronutrientes</h2>
+            <p className="card-description">Porcentagem de proteína, carboidrato e gordura</p>
           </div>
           <div
             className="card-content chart-container"
@@ -209,8 +210,8 @@ export default function Home() {
               </div>
             ) : (
               <div className="empty-chart-message">
-                <p>No macronutrient data available</p>
-                <p className="empty-chart-subtitle">Add meals to see your macronutrient distribution</p>
+                <p>Não há dados disponíveis sobre macronutrientes</p>
+                <p className="empty-chart-subtitle">Adicione refeições para ver sua distribuição de macronutrientes</p>
               </div>
             )}
           </div>
@@ -220,8 +221,8 @@ export default function Home() {
       <div className="full-width-section">
         <div className="card">
           <div className="card-header">
-            <h2 className="card-title">Daily Calorie Intake</h2>
-            <p className="card-description">Comparing daily consumption with target</p>
+            <h2 className="card-title">Ingestão calórica diária</h2>
+            <p className="card-description">Comparando o consumo diário com a meta</p>
           </div>
           <div className="card-content chart-container">
             {chartData.line ? (
@@ -256,20 +257,20 @@ export default function Home() {
       <div className="grid-layout three-columns">
         <div className="card span-two">
           <div className="card-header">
-            <h2 className="card-title">Recent Meals</h2>
-            <p className="card-description">Your last recorded meals</p>
+            <h2 className="card-title">Refeições Recentes            </h2>
+            <p className="card-description">Suas últimas refeições registradas</p>
           </div>
           <div className="card-content">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Meal</th>
-                  <th>Type</th>
-                  <th>Calories</th>
-                  <th>Protein</th>
-                  <th>Carbs</th>
-                  <th>Fat</th>
+                  <th>Data</th>
+                  <th>Refeição</th>
+                  <th>Tipo</th>
+                  <th>Calorias</th>
+                  <th>Proteínas</th>
+                  <th>Carboidratos</th>
+                  <th>Gorduras</th>
                 </tr>
               </thead>
               <tbody>
@@ -288,22 +289,22 @@ export default function Home() {
                 ) : (
                   <tr>
                     <td colSpan={7} className="empty-table-message">
-                      No meals recorded. Add your first meal by selecting a day!
+                      Nenhuma refeição registrada. Adicione sua primeira refeição selecionando um dia!
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
             <button className="button button-outline full-width" onClick={() => router.push("/reports")}>
-              View Full Report
+              Ver relatório completo
             </button>
           </div>
         </div>
 
         <div className="card">
           <div className="card-header">
-            <h2 className="card-title">Caloric Goal Adherence</h2>
-            <p className="card-description">How well you're meeting your weekly target</p>
+            <h2 className="card-title">Adesão à meta calórica</h2>
+            <p className="card-description">Quão bem você está atingindo sua meta semanal</p>
           </div>
           <div
             className="card-content adherence-container"
@@ -313,7 +314,7 @@ export default function Home() {
             <p className="card-description" style={{ textAlign: "center", marginTop: "1rem" }}>
               {totalCalories > 0 ? (
                 <>
-                  of {totalTarget} weekly calorie goal met
+                  da {totalTarget} meta semanal de calorias atingida
                   <br />
                   <span className="adherence-detail">
                     ({totalCalories} / {totalTarget} calories)
