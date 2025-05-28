@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { format } from "date-fns"
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, startOfMonth, endOfMonth } from "date-fns"
+import { ptBR } from "date-fns/locale"
 import { useRouter } from "next/navigation"
 import { useMealStore } from "@/lib/store"
 import { BasicCalendar } from "@/components/basic-calendar"
@@ -26,6 +27,14 @@ export default function Home() {
   const { meals } = useMealStore()
   const [chartData, setChartData] = useState<{ pie: any; line: any }>({ pie: null, line: null })
   const selectedDate = new Date(selectedDateStr + "T12:00:00Z")
+  const [weekRangeDisplay, setWeekRangeDisplay] = useState("")
+  const [monthDisplay, setMonthDisplay] = useState("")
+  const [adherenceRate, setAdherenceRate] = useState(0)
+  const [totalCalories, setTotalCalories] = useState(0)
+  const [weeklyCalorieTarget, setWeeklyCalorieTarget] = useState(0)
+  const [totalProtein, setTotalProtein] = useState(0)
+  const [totalCarbs, setTotalCarbs] = useState(0)
+  const [totalFat, setTotalFat] = useState(0)
 
   const handleDateSelect = (dateStr: string) => {
     setSelectedDateStr(dateStr)
@@ -35,44 +44,78 @@ export default function Home() {
     router.push(`/day/${selectedDateStr}`)
   }
 
-  // Calculate totals based on current meals
-  const totalProtein = meals.reduce((sum, meal) => sum + meal.protein, 0)
-  const totalCarbs = meals.reduce((sum, meal) => sum + meal.carbs, 0)
-  const totalFat = meals.reduce((sum, meal) => sum + meal.fat, 0)
-  const totalCalories = meals.reduce((sum, meal) => sum + meal.calories, 0)
-
-  // Get dates for the last 7 days
-  const today = new Date()
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date()
-    date.setDate(today.getDate() - i)
-    return format(date, "yyyy-MM-dd")
-  }).reverse()
-
-  // Calculate calorie data for each day without random values
-  const calorieData = last7Days.map((day) => {
-    const dayMeals = meals.filter((meal) => meal.date === day)
-    const calories = dayMeals.reduce((sum, meal) => sum + meal.calories, 0)
-    return {
-      date: format(new Date(day + "T12:00:00Z"), "MM/dd"),
-      calories,
-      target: 2000, // Daily calorie target
-    }
-  })
-
-  // Calculate adherence rate based on actual data
-  const calorieTarget = 2000 // Daily calorie target
-  const totalTarget = calorieTarget * last7Days.length
-  const adherenceRate = totalTarget > 0 ? Math.min(100, Math.round((totalCalories / totalTarget) * 100)) : 0
-
-  // Update chart data whenever meals change
+  // Calculate weekly data and update state
   useEffect(() => {
-    // Only create pie chart if there's actual data
+    // Get the current week's start and end dates
+    const today = new Date()
+    const weekStart = startOfWeek(today, { weekStartsOn: 0 }) // 0 = Sunday
+    const weekEnd = endOfWeek(today, { weekStartsOn: 0 })
+
+    // Get the current month's start and end dates
+    const monthStart = startOfMonth(today)
+    const monthEnd = endOfMonth(today)
+
+    // Format the week range for display
+    const formattedWeekRange = `${format(weekStart, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM/yyyy", { locale: ptBR })}`
+    setWeekRangeDisplay(formattedWeekRange)
+
+    // Format the month for display
+    const formattedMonth = format(today, "MMMM yyyy", { locale: ptBR })
+    setMonthDisplay(formattedMonth)
+
+    // Get dates for the current week
+    const currentWeekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
+
+    // Get dates for the current month
+    const currentMonthDays = eachDayOfInterval({ start: monthStart, end: monthEnd })
+
+    // Filter meals to only include those from the current week
+    const currentWeekMeals = meals.filter((meal) => {
+      const mealDate = new Date(meal.date + "T12:00:00Z")
+      return mealDate >= weekStart && mealDate <= weekEnd
+    })
+
+    // Calculate totals based on current week's meals
+    const weekProtein = currentWeekMeals.reduce((sum, meal) => sum + meal.protein, 0)
+    const weekCarbs = currentWeekMeals.reduce((sum, meal) => sum + meal.carbs, 0)
+    const weekFat = currentWeekMeals.reduce((sum, meal) => sum + meal.fat, 0)
+    const weekCalories = currentWeekMeals.reduce((sum, meal) => sum + meal.calories, 0)
+
+    // Update state with calculated values
+    setTotalProtein(weekProtein)
+    setTotalCarbs(weekCarbs)
+    setTotalFat(weekFat)
+    setTotalCalories(weekCalories)
+
+    // Calculate daily calorie target and weekly target
+    const dailyCalorieTarget = 2000 // Daily calorie target
+    const weeklyTarget = dailyCalorieTarget * 7 // Weekly target (7 days)
+    setWeeklyCalorieTarget(weeklyTarget)
+
+    // Calculate adherence rate
+    const calculatedAdherenceRate =
+      weeklyTarget > 0 ? Math.min(100, Math.round((weekCalories / weeklyTarget) * 100)) : 0
+    setAdherenceRate(calculatedAdherenceRate)
+
+    // Get calorie data for each day of the current MONTH (not just week)
+    const calorieData = currentMonthDays.map((day) => {
+      const dateStr = format(day, "yyyy-MM-dd")
+      const dayMeals = meals.filter((meal) => meal.date === dateStr)
+      const dayCalories = dayMeals.reduce((sum, meal) => sum + meal.calories, 0)
+      return {
+        date: format(day, "dd"), // Day of month
+        fullDate: format(day, "dd/MM", { locale: ptBR }), // Day/Month for tooltip
+        calories: dayCalories,
+        target: dailyCalorieTarget,
+      }
+    })
+
+    // Create pie chart data
     const pieData = {
-      labels: ["Protein", "Carbs", "Fat"],
+      labels: ["Proteína", "Carboidratos", "Gordura"],
       datasets: [
         {
-          data: [totalProtein, totalCarbs, totalFat],
+          data: [weekProtein, weekCarbs, weekFat],
           backgroundColor: ["#10b981", "#3b82f6", "#f59e0b"],
           borderColor: ["#059669", "#2563eb", "#d97706"],
           borderWidth: 1,
@@ -80,11 +123,12 @@ export default function Home() {
       ],
     }
 
+    // Create line chart data
     const lineData = {
       labels: calorieData.map((item) => item.date),
       datasets: [
         {
-          label: "Calories",
+          label: "Calorias",
           data: calorieData.map((item) => item.calories),
           borderColor: "#10b981",
           backgroundColor: "rgba(16, 185, 129, 0.2)",
@@ -92,8 +136,8 @@ export default function Home() {
           fill: true,
         },
         {
-          label: "Target",
-          data: calorieData.map(() => calorieTarget),
+          label: "Meta",
+          data: calorieData.map(() => dailyCalorieTarget),
           borderColor: "#6366f1",
           borderDash: [5, 5],
           backgroundColor: "transparent",
@@ -103,8 +147,9 @@ export default function Home() {
       ],
     }
 
+    // Update chart data
     setChartData({ pie: pieData, line: lineData })
-  }, [meals, totalProtein, totalCarbs, totalFat]) // Include all dependencies
+  }, [meals]) // Only depend on meals, not derived values
 
   const DonutProgress = ({ percentage }: { percentage: number }) => {
     const radius = 60
@@ -150,20 +195,19 @@ export default function Home() {
 
   return (
     <div className="container">
-      <h1 className="page-title">Registrador de Refeição</h1>
+      <h1 className="page-title">Rastreador de Refeições</h1>
 
       <div className="grid-layout" style={{ alignItems: "stretch" }}>
         <div className="card" style={{ display: "flex", flexDirection: "column", height: "450px" }}>
           <div className="card-header">
             <h2 className="card-title">Calendário</h2>
-            <p className="card-description">
-            Selecione um dia para adicionar refeições</p>
+            <p className="card-description">Selecione um dia para adicionar refeições</p>
           </div>
           <div className="card-content" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <div style={{ marginBottom: "1rem", transform: "scale(0.85)", transformOrigin: "top center" }}>
               <BasicCalendar selectedDateStr={selectedDateStr} onSelectDate={handleDateSelect} />
               <button className="button button-primary full-width" onClick={goToMealEntry}>
-              Adicionar refeições para {format(selectedDate, "MMMM d, yyyy")}
+                Adicionar Refeições para {format(selectedDate, "d 'de' MMMM, yyyy", { locale: ptBR })}
               </button>
             </div>
           </div>
@@ -172,7 +216,7 @@ export default function Home() {
         <div className="card" style={{ display: "flex", flexDirection: "column", height: "450px" }}>
           <div className="card-header">
             <h2 className="card-title">Distribuição de Macronutrientes</h2>
-            <p className="card-description">Porcentagem de proteína, carboidrato e gordura</p>
+            <p className="card-description">Porcentagem de proteína, carboidratos e gordura</p>
           </div>
           <div
             className="card-content chart-container"
@@ -210,7 +254,7 @@ export default function Home() {
               </div>
             ) : (
               <div className="empty-chart-message">
-                <p>Não há dados disponíveis sobre macronutrientes</p>
+                <p>Nenhum dado de macronutrientes disponível</p>
                 <p className="empty-chart-subtitle">Adicione refeições para ver sua distribuição de macronutrientes</p>
               </div>
             )}
@@ -221,8 +265,8 @@ export default function Home() {
       <div className="full-width-section">
         <div className="card">
           <div className="card-header">
-            <h2 className="card-title">Ingestão calórica diária</h2>
-            <p className="card-description">Comparando o consumo diário com a meta</p>
+            <h2 className="card-title">Consumo Diário de Calorias</h2>
+            <p className="card-description">Consumo diário para {monthDisplay}</p>
           </div>
           <div className="card-content chart-container">
             {chartData.line ? (
@@ -233,21 +277,45 @@ export default function Home() {
                   scales: {
                     y: {
                       beginAtZero: true,
-                      title: { display: true, text: "Calories" },
+                      title: { display: true, text: "Calorias" },
                     },
                     x: {
-                      title: { display: true, text: "Date" },
+                      title: { display: true, text: "Dia do Mês" },
                     },
                   },
                   plugins: {
                     legend: { position: "bottom" },
-                    tooltip: { mode: "index", intersect: false },
+                    tooltip: {
+                      mode: "index",
+                      intersect: false,
+                      callbacks: {
+                        title: (context) => {
+                          // Use the stored full date (day/month) for the tooltip title
+                          if (context[0] && context[0].dataIndex !== undefined) {
+                            const dataIndex = context[0].dataIndex
+                            const calorieData = chartData.line.labels.map((_: string, i: number) => ({
+                              fullDate:
+                                format(new Date(), "yyyy-MM") +
+                                "-" +
+                                (Number.parseInt(chartData.line.labels[i] as string) < 10
+                                  ? "0" + chartData.line.labels[i]
+                                  : chartData.line.labels[i]),
+                            }))
+
+                            if (calorieData[dataIndex]) {
+                              return format(new Date(calorieData[dataIndex].fullDate), "dd/MM/yyyy", { locale: ptBR })
+                            }
+                          }
+                          return ""
+                        },
+                      },
+                    },
                   },
                 }}
               />
             ) : (
               <div className="empty-chart-message">
-                <p>No calorie data available</p>
+                <p>Nenhum dado de calorias disponível</p>
               </div>
             )}
           </div>
@@ -257,7 +325,7 @@ export default function Home() {
       <div className="grid-layout three-columns">
         <div className="card span-two">
           <div className="card-header">
-            <h2 className="card-title">Refeições Recentes            </h2>
+            <h2 className="card-title">Refeições Recentes</h2>
             <p className="card-description">Suas últimas refeições registradas</p>
           </div>
           <div className="card-content">
@@ -268,16 +336,16 @@ export default function Home() {
                   <th>Refeição</th>
                   <th>Tipo</th>
                   <th>Calorias</th>
-                  <th>Proteínas</th>
+                  <th>Proteína</th>
                   <th>Carboidratos</th>
-                  <th>Gorduras</th>
+                  <th>Gordura</th>
                 </tr>
               </thead>
               <tbody>
                 {meals.length > 0 ? (
                   meals.slice(0, 5).map((meal, index) => (
                     <tr key={index}>
-                      <td>{format(new Date(meal.date + "T12:00:00Z"), "MM/dd/yyyy")}</td>
+                      <td>{format(new Date(meal.date + "T12:00:00Z"), "dd/MM/yyyy", { locale: ptBR })}</td>
                       <td>{meal.name}</td>
                       <td>{meal.mealType}</td>
                       <td>{meal.calories}</td>
@@ -296,15 +364,15 @@ export default function Home() {
               </tbody>
             </table>
             <button className="button button-outline full-width" onClick={() => router.push("/reports")}>
-              Ver relatório completo
+              Ver Relatório Completo
             </button>
           </div>
         </div>
 
         <div className="card">
           <div className="card-header">
-            <h2 className="card-title">Adesão à meta calórica</h2>
-            <p className="card-description">Quão bem você está atingindo sua meta semanal</p>
+            <h2 className="card-title">Aderência à Meta Calórica</h2>
+            <p className="card-description">Semana atual: {weekRangeDisplay}</p>
           </div>
           <div
             className="card-content adherence-container"
@@ -314,14 +382,14 @@ export default function Home() {
             <p className="card-description" style={{ textAlign: "center", marginTop: "1rem" }}>
               {totalCalories > 0 ? (
                 <>
-                  da {totalTarget} meta semanal de calorias atingida
+                  da meta semanal de {weeklyCalorieTarget} calorias atingida
                   <br />
                   <span className="adherence-detail">
-                    ({totalCalories} / {totalTarget} calories)
+                    ({totalCalories} / {weeklyCalorieTarget} calorias)
                   </span>
                 </>
               ) : (
-                "No calorie data available"
+                "Nenhum dado de calorias disponível"
               )}
             </p>
           </div>

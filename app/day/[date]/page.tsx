@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, use } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 import { Trash2, Plus, Loader2, Edit, Check, X } from "lucide-react"
 import { useMealStore, type MealType, type ServingInfo } from "@/lib/store"
 import { FoodSearch } from "@/components/food-search"
@@ -230,7 +231,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
   )
 
   const dateObj = new Date(date + "T12:00:00Z")
-  const formattedDate = format(dateObj, "MMMM d, yyyy")
+  const formattedDate = format(dateObj, "d 'de' MMMM 'de' yyyy", { locale: ptBR })
 
   const translateMealType = (type: MealType): string => {
     switch (type) {

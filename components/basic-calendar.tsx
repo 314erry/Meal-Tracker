@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { format, addMonths, subMonths, getYear, getMonth, parseISO } from "date-fns"
+import { ptBR } from "date-fns/locale"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useMealStore } from "@/lib/store"
 
@@ -107,20 +108,20 @@ export function BasicCalendar({ selectedDateStr, onSelectDate }: BasicCalendarPr
         <button onClick={prevMonth} className="calendar-nav-button">
           <ChevronLeft className="icon-small" />
         </button>
-        <div className="calendar-month">{format(currentMonth, "MMMM yyyy")}</div>
+        <div className="calendar-month">{format(currentMonth, "MMMM yyyy", { locale: ptBR })}</div>
         <button onClick={nextMonth} className="calendar-nav-button">
           <ChevronRight className="icon-small" />
         </button>
       </div>
 
       <div className="calendar-weekdays">
-        <div>Sun</div>
-        <div>Mon</div>
-        <div>Tue</div>
-        <div>Wed</div>
-        <div>Thu</div>
-        <div>Fri</div>
-        <div>Sat</div>
+        <div>Dom</div>
+        <div>Seg</div>
+        <div>Ter</div>
+        <div>Qua</div>
+        <div>Qui</div>
+        <div>Sex</div>
+        <div>Sáb</div>
       </div>
 
       <div className="calendar-grid">{days}</div>
