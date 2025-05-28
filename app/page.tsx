@@ -35,7 +35,7 @@ export default function Home() {
     router.push(`/day/${selectedDateStr}`)
   }
 
-  // Calculate totals based on current meals
+  // Calcular totais com base nas refeições atuais
   const totalProtein = meals.reduce((sum, meal) => sum + meal.protein, 0)
   const totalCarbs = meals.reduce((sum, meal) => sum + meal.carbs, 0)
   const totalFat = meals.reduce((sum, meal) => sum + meal.fat, 0)
