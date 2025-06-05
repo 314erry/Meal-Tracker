@@ -3,7 +3,6 @@ Instale as dependencias na pasta principal do projeto
 npm i --legacy-peer-deps
 ```
 Crie o arquivo .env.local na pasta principal do projeto
-```
 Adicione as chaves das API's necessárias no arquivo .env.local:
 ```
 NUTRITIONIX_API_KEY = 446afa0bf42bc57d26b8a194f376d464
