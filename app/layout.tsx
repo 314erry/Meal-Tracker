@@ -1,13 +1,13 @@
 import type React from "react"
 import "@/app/globals.css"
 import { Inter } from "next/font/google"
+import { AuthWrapper } from "@/components/auth-wrapper"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: "Meal Tracker",
   description: "Track your daily meals and nutrition",
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {children}
+        <AuthWrapper>{children}</AuthWrapper>
       </body>
     </html>
   )

@@ -18,6 +18,7 @@ import {
   Title,
 } from "chart.js"
 import { Pie, Line } from "react-chartjs-2"
+import { UserMenu } from "@/components/user-menu"
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title)
 
@@ -195,7 +196,10 @@ export default function Home() {
 
   return (
     <div className="container">
-      <h1 className="page-title">Rastreador de Refeições</h1>
+      <div className="page-header">
+        <h1 className="page-title">Rastreador de Refeições</h1>
+        <UserMenu />
+      </div>
 
       <div className="grid-layout" style={{ alignItems: "stretch" }}>
         <div className="card" style={{ display: "flex", flexDirection: "column", height: "450px" }}>
