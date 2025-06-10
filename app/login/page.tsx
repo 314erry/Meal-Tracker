@@ -21,23 +21,14 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      })
+      // Import auth store dynamically
+      const { useAuthStore } = await import("@/lib/auth-store")
 
-      const data = await response.json()
+      // Use the auth store's login method
+      await useAuthStore.getState().login(email, password)
 
-      if (!response.ok) {
-        throw new Error(data.error || "Login failed")
-      }
-
-      // Redirect to home page
-      router.push("/")
-      router.refresh()
+      // The AuthWrapper will handle the redirection automatically
+      console.log("Login completed, AuthWrapper should redirect")
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {

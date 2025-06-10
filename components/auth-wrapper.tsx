@@ -25,16 +25,29 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   }, [checkAuth])
 
   useEffect(() => {
+    console.log(
+      "AuthWrapper effect - user:",
+      user,
+      "loading:",
+      loading,
+      "isPublicRoute:",
+      isPublicRoute,
+      "pathname:",
+      pathname,
+    )
+
     if (!loading) {
       if (!user && !isPublicRoute) {
         // User is not authenticated and trying to access a protected route
-        router.push("/login")
+        console.log("Redirecting to login - user not authenticated")
+        router.replace("/login")
       } else if (user && isPublicRoute) {
         // User is authenticated and trying to access a public route
-        router.push("/")
+        console.log("Redirecting to home - user authenticated on public route")
+        router.replace("/")
       }
     }
-  }, [user, loading, isPublicRoute, router])
+  }, [user, loading, isPublicRoute, router, pathname])
 
   // Show loading spinner while checking authentication
   if (loading) {
