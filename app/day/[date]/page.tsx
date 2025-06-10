@@ -323,7 +323,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
   }
 
   return (
-    <div className="container">
+    <div className="container dark-mode">
       <div className="page-header">
         <h1 className="page-title">Refeições para {formattedDate}</h1>
         <button className="button button-outline" onClick={() => router.push("/")}>
@@ -598,82 +598,348 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
         </div>
       </div>
 
-      <style jsx>{`
+      <style jsx global>{`
+        /* Tema Dark Global - aplicado a toda a aplicação */
+        :global(body), :global(html), :global(#__next) {
+          background-color: #121212 !important;
+          color: #e8eaed !important;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* Container principal */
+        .container {
+          background-color: transparent !important;
+          color: inherit !important;
+          min-height: 100vh;
+          padding: 1rem;
+        }
+
+        /* Cards */
+        .dark-mode .card {
+          background-color: #1e1e1e !important;
+          border: 1px solid #2a2a2a !important;
+          color: #f0f0f0 !important;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .dark-mode .card-header {
+          border-bottom: 1px solid #333 !important;
+          padding: 1rem;
+        }
+
+        .dark-mode .card-content {
+          padding: 1rem;
+        }
+
+        /* Cabeçalhos */
+        .dark-mode .page-header {
+          border-bottom: 1px solid #2a2a2a !important;
+          margin-bottom: 1.5rem;
+          padding-bottom: 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .dark-mode .page-title,
+        .dark-mode .card-title,
+        .dark-mode .meal-type-title,
+        .dark-mode .food-name {
+          color: #ffffff !important;
+          margin: 0;
+        }
+
+        .dark-mode .card-description,
+        .dark-mode .empty-table-message,
+        .dark-mode .empty-chart-message {
+          color: #aaaaaa !important;
+        }
+
+        /* Formulários */
+        .dark-mode .form-input,
+        .dark-mode input,
+        .dark-mode select,
+        .dark-mode textarea {
+          background-color: #202124 !important;
+          border: 1px solid #3c4043 !important;
+          color: #e8eaed !important;
+          padding: 0.75rem;
+          border-radius: 4px;
+          width: 100%;
+          font-size: 1rem;
+        }
+
+        .dark-mode .form-input:focus,
+        .dark-mode input:focus,
+        .dark-mode select:focus,
+        .dark-mode textarea:focus {
+          border-color: #10b981 !important;
+          background-color: #2c2c2c !important;
+          outline: none;
+          box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        .dark-mode .form-label {
+          color: #e8eaed !important;
+          font-weight: 500;
+          margin-bottom: 0.5rem;
+          display: block;
+        }
+
+        .dark-mode .form-group {
+          margin-bottom: 1rem;
+        }
+
+        /* Botões */
+        .dark-mode .button {
+          background-color: #2d2d2d !important;
+          color: #ffffff !important;
+          border: 1px solid #444 !important;
+          padding: 0.75rem 1rem;
+          font-weight: 600;
+          border-radius: 6px;
+          text-align: center;
+          cursor: pointer;
+          font-size: 1rem;
+          transition: all 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          text-decoration: none;
+        }
+
+        .dark-mode .button:hover {
+          background-color: #3a3a3a !important;
+          transform: translateY(-1px);
+        }
+
+        .dark-mode .button-primary {
+          background-color: #10b981 !important;
+          color: #ffffff !important;
+          border: none !important;
+        }
+
+        .dark-mode .button-primary:hover {
+          background-color: #059669 !important;
+        }
+
+        .dark-mode .button-primary:disabled {
+          background-color: #4a5568 !important;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .dark-mode .button-outline {
+          background-color: transparent !important;
+          color: #10b981 !important;
+          border: 2px solid #10b981 !important;
+        }
+
+        .dark-mode .button-outline:hover {
+          background-color: #10b981 !important;
+          color: #ffffff !important;
+        }
+
+        .dark-mode .button-icon {
+          background-color: transparent !important;
+          color: #aaaaaa !important;
+          border: none !important;
+          padding: 0.5rem;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .dark-mode .button-icon:hover {
+          background-color: #3a3a3a !important;
+          color: #ffffff !important;
+        }
+
+        .dark-mode .full-width {
+          width: 100%;
+        }
+
+        /* Tabelas */
+        .dark-mode .data-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 1rem;
+        }
+
+        .dark-mode .data-table th,
+        .dark-mode .data-table td {
+          border: 1px solid #333 !important;
+          padding: 0.75rem 0.5rem;
+          text-align: left;
+          color: #e8eaed !important;
+        }
+
+        .dark-mode .data-table th {
+          background-color: #2c2c2c !important;
+          font-weight: 600;
+          color: #ffffff !important;
+        }
+
+        .dark-mode .data-table tr:nth-child(even) {
+          background-color: #242424 !important;
+        }
+
+        .dark-mode .data-table tr:hover {
+          background-color: #333 !important;
+        }
+
+        .dark-mode .total-row {
+          background-color: #2c2c2c !important;
+          font-weight: 600;
+        }
+
+        .dark-mode .total-row:hover {
+          background-color: #2c2c2c !important;
+        }
+
+        /* Imagens */
+        .dark-mode .food-thumbnail {
+          width: 32px;
+          height: 32px;
+          object-fit: cover;
+          border-radius: 4px;
+          border: 1px solid #3c4043;
+        }
+
+        .dark-mode .food-image {
+          width: 60px;
+          height: 60px;
+          object-fit: cover;
+          border-radius: 6px;
+          border: 1px solid #3c4043;
+        }
+
+        /* Mensagens de erro */
+        .dark-mode .error-message {
+          background-color: #2c1c1c !important;
+          border: 1px solid #f87171 !important;
+          color: #fecaca !important;
+          padding: 0.75rem;
+          border-radius: 4px;
+          margin-top: 1rem;
+        }
+
+        .dark-mode .error-banner {
+          background-color: #2c1c1c !important;
+          border: 1px solid #f87171 !important;
+          color: #fecaca !important;
+          padding: 1rem;
+          border-radius: 6px;
+          margin-bottom: 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        /* Layout */
+        .grid-layout {
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+        }
+
+        .span-two {
+          grid-column: span 1;
+        }
+
         .meals-by-type {
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
         }
+
         .meal-type-section {
           margin-bottom: 1rem;
         }
+
         .meal-type-title {
           font-size: 1.1rem;
           font-weight: 600;
           margin-bottom: 0.5rem;
           padding-bottom: 0.25rem;
-          border-bottom: 1px solid var(--color-card-border);
+          border-bottom: 1px solid #333;
         }
+
         .meal-totals {
           margin-top: 1rem;
           padding-top: 1rem;
-          border-top: 2px solid var(--color-card-border);
+          border-top: 2px solid #333;
         }
+
         .form-actions {
           display: flex;
           justify-content: ${isAddingManually || selectedFood || editingMeal ? "space-between" : "center"};
           margin-top: 1rem;
+          gap: 1rem;
         }
-        .error-message {
-          color: var(--color-error);
-          margin-top: 1rem;
-          font-size: 0.875rem;
-        }
-        .food-thumbnail {
-          width: 32px;
-          height: 32px;
-          object-fit: cover;
-          border-radius: 4px;
-        }
+
         .action-buttons {
           display: flex;
           gap: 0.5rem;
         }
+
         .food-header {
           display: flex;
           align-items: center;
           gap: 1rem;
           margin-bottom: 1rem;
         }
-        .food-image {
-          width: 60px;
-          height: 60px;
-          object-fit: cover;
-          border-radius: 6px;
-        }
+
         .food-name-container {
           flex: 1;
         }
-        .food-name {
-          font-size: 1.1rem;
-          font-weight: 600;
-          margin: 0;
-        }
+
         .nutrition-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 1rem;
         }
-        .error-banner {
-          background-color: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #dc2626;
-          padding: 1rem;
-          border-radius: var(--border-radius);
-          margin-bottom: 1rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+
+        .icon-small {
+          width: 16px;
+          height: 16px;
+        }
+
+        /* Animações */
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+          .grid-layout {
+            grid-template-columns: 1fr;
+          }
+          
+          .nutrition-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .form-actions {
+            flex-direction: column;
+          }
+          
+          .page-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+          }
         }
       `}</style>
     </div>
