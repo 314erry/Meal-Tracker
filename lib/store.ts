@@ -33,6 +33,29 @@ export interface Meal {
   imageUrl?: string
 }
 
+// Interface for raw data from API (with snake_case fields)
+export interface RawMeal {
+  id?: number
+  date: string
+  name: string
+  original_name?: string
+  calories: number
+  protein: number
+  carbs: number
+  fat: number
+  meal_type: string // snake_case from database
+  food_id?: string
+  serving?: ServingInfo
+  altMeasures?: Array<{
+    serving_weight: number
+    measure: string
+    original_measure?: string
+    seq: number | null
+    qty: number
+  }>
+  image_url?: string
+}
+
 interface MealStore {
   meals: Meal[]
   loading: boolean
@@ -47,6 +70,25 @@ interface MealStore {
   clearError: () => void
   resetStore: () => void
   setCurrentUser: (userId: number | null) => void
+}
+
+// Helper function to normalize raw meal data from API
+function normalizeMeal(rawMeal: RawMeal): Meal {
+  return {
+    id: rawMeal.id,
+    date: rawMeal.date,
+    name: rawMeal.name,
+    originalName: rawMeal.original_name,
+    calories: rawMeal.calories,
+    protein: rawMeal.protein,
+    carbs: rawMeal.carbs,
+    fat: rawMeal.fat,
+    mealType: rawMeal.meal_type as MealType,
+    foodId: rawMeal.food_id,
+    serving: rawMeal.serving,
+    altMeasures: rawMeal.altMeasures,
+    imageUrl: rawMeal.image_url,
+  }
 }
 
 export const useMealStore = create<MealStore>((set, get) => ({
@@ -111,16 +153,27 @@ export const useMealStore = create<MealStore>((set, get) => ({
     set({ loading: true, error: null })
     try {
       let url = "/api/meals"
+      const params = new URLSearchParams()
+
       if (date) {
-        url += `?date=${date}`
+        params.append("date", date)
+        console.log("Fetching meals for specific date:", date)
       } else if (month) {
-        url += `?month=${month}`
+        params.append("month", month)
+        console.log("Fetching meals for month:", month)
+      } else {
+        console.log("Fetching ALL meals (no date/month filter)")
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`
       }
 
       console.log("Fetching meals from:", url)
 
       const response = await fetch(url, {
         credentials: "include", // Ensure cookies are sent
+        cache: "no-store", // Force fresh data
       })
 
       if (response.status === 401) {
@@ -135,9 +188,27 @@ export const useMealStore = create<MealStore>((set, get) => ({
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
       }
 
-      const data = await response.json()
-      console.log("Fetched meals for current user:", data.length)
-      set({ meals: data, loading: false })
+      const rawData: RawMeal[] = await response.json()
+      console.log("Fetched raw meals for current user:", rawData.length)
+
+      if (date) {
+        console.log("Fetched meals for date", date, ":", rawData.length)
+      } else if (month) {
+        console.log("Fetched meals for month", month, ":", rawData.length)
+      } else {
+        console.log("Fetched ALL meals:", rawData.length)
+        console.log(
+          "Date range:",
+          rawData.length > 0 ? `${rawData[rawData.length - 1]?.date} to ${rawData[0]?.date}` : "No meals",
+        )
+      }
+
+      // Normalize the data to ensure consistent field names
+      const normalizedMeals = rawData.map(normalizeMeal)
+
+      console.log("Normalized meals:", normalizedMeals.length)
+
+      set({ meals: normalizedMeals, loading: false })
     } catch (error) {
       console.error("Error fetching meals:", error)
       set({
@@ -174,11 +245,14 @@ export const useMealStore = create<MealStore>((set, get) => ({
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
       }
 
-      const newMeal = await response.json()
-      console.log("Meal added successfully:", newMeal)
+      const rawNewMeal: RawMeal = await response.json()
+      console.log("Raw meal added successfully:", rawNewMeal)
+
+      // Normalize the new meal data
+      const normalizedMeal = normalizeMeal(rawNewMeal)
 
       set((state) => ({
-        meals: [newMeal, ...state.meals],
+        meals: [normalizedMeal, ...state.meals],
         loading: false,
       }))
     } catch (error) {
@@ -194,23 +268,38 @@ export const useMealStore = create<MealStore>((set, get) => ({
   removeMeal: async (mealId) => {
     set({ loading: true, error: null })
     try {
-      console.log("Removing meal:", mealId)
+      console.log("Removing meal:", mealId, "type:", typeof mealId)
 
-      const response = await fetch(`/api/meals/${mealId}`, {
+      // Ensure mealId is a number
+      const id = typeof mealId === "string" ? Number.parseInt(mealId) : mealId
+      if (isNaN(id)) {
+        throw new Error("Invalid meal ID")
+      }
+
+      const response = await fetch(`/api/meals/${id}`, {
         method: "DELETE",
         credentials: "include",
       })
 
+      console.log("Remove meal response status:", response.status)
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-        console.error("Remove meal error:", errorData)
-        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        try {
+          const errorData = await response.json()
+          console.error("Remove meal error response:", errorData)
+          errorMessage = errorData.error || errorMessage
+        } catch (parseError) {
+          console.error("Failed to parse error response:", parseError)
+        }
+        throw new Error(errorMessage)
       }
 
-      console.log("Meal removed successfully")
+      const result = await response.json()
+      console.log("Meal removed successfully:", result)
 
       set((state) => ({
-        meals: state.meals.filter((meal) => meal.id !== mealId),
+        meals: state.meals.filter((meal) => meal.id !== id),
         loading: false,
       }))
     } catch (error) {
@@ -243,11 +332,14 @@ export const useMealStore = create<MealStore>((set, get) => ({
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
       }
 
-      const updated = await response.json()
+      const rawUpdated: RawMeal = await response.json()
       console.log("Meal updated successfully")
 
+      // Normalize the updated meal data
+      const normalizedMeal = normalizeMeal(rawUpdated)
+
       set((state) => ({
-        meals: state.meals.map((meal) => (meal.id === mealId ? updated : meal)),
+        meals: state.meals.map((meal) => (meal.id === mealId ? normalizedMeal : meal)),
         loading: false,
       }))
     } catch (error) {

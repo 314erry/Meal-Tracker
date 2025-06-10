@@ -25,7 +25,7 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointE
 export default function Home() {
   const [selectedDateStr, setSelectedDateStr] = useState(format(new Date(), "yyyy-MM-dd"))
   const router = useRouter()
-  const { meals } = useMealStore()
+  const { meals, fetchMeals } = useMealStore()
   const [chartData, setChartData] = useState<{ pie: any; line: any }>({ pie: null, line: null })
   const selectedDate = new Date(selectedDateStr + "T12:00:00Z")
   const [weekRangeDisplay, setWeekRangeDisplay] = useState("")
@@ -37,6 +37,45 @@ export default function Home() {
   const [totalCarbs, setTotalCarbs] = useState(0)
   const [totalFat, setTotalFat] = useState(0)
 
+  // Force refresh ALL meals when homepage loads
+  useEffect(() => {
+    console.log("Homepage mounted - fetching ALL meals")
+    const refreshAllMeals = async () => {
+      try {
+        // Fetch ALL meals (no date filter) to ensure we have complete data
+        await fetchMeals()
+        console.log("All meals refreshed for homepage")
+      } catch (error) {
+        console.error("Error refreshing all meals:", error)
+      }
+    }
+
+    refreshAllMeals()
+  }, [fetchMeals])
+
+  // Also refresh when page becomes visible (user returns from other pages)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log("Homepage became visible - refreshing all meals")
+        fetchMeals() // Fetch all meals when returning to homepage
+      }
+    }
+
+    const handleFocus = () => {
+      console.log("Homepage focused - refreshing all meals")
+      fetchMeals() // Fetch all meals when window gets focus
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    window.addEventListener("focus", handleFocus)
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      window.removeEventListener("focus", handleFocus)
+    }
+  }, [fetchMeals])
+
   const handleDateSelect = (dateStr: string) => {
     setSelectedDateStr(dateStr)
   }
@@ -47,6 +86,8 @@ export default function Home() {
 
   // Calculate weekly data and update state
   useEffect(() => {
+    console.log("Calculating charts and stats with", meals.length, "total meals")
+
     // Get the current week's start and end dates
     const today = new Date()
     const weekStart = startOfWeek(today, { weekStartsOn: 0 }) // 0 = Sunday
@@ -76,11 +117,19 @@ export default function Home() {
       return mealDate >= weekStart && mealDate <= weekEnd
     })
 
+    console.log("Current week meals:", currentWeekMeals.length)
+    console.log(
+      "Week meals dates:",
+      currentWeekMeals.map((m) => m.date),
+    )
+
     // Calculate totals based on current week's meals
     const weekProtein = currentWeekMeals.reduce((sum, meal) => sum + meal.protein, 0)
     const weekCarbs = currentWeekMeals.reduce((sum, meal) => sum + meal.carbs, 0)
     const weekFat = currentWeekMeals.reduce((sum, meal) => sum + meal.fat, 0)
     const weekCalories = currentWeekMeals.reduce((sum, meal) => sum + meal.calories, 0)
+
+    console.log("Week totals - Calories:", weekCalories, "Protein:", weekProtein, "Carbs:", weekCarbs, "Fat:", weekFat)
 
     // Update state with calculated values
     setTotalProtein(weekProtein)
@@ -110,6 +159,11 @@ export default function Home() {
         target: dailyCalorieTarget,
       }
     })
+
+    console.log(
+      "Monthly calorie data:",
+      calorieData.filter((d) => d.calories > 0),
+    )
 
     // Create pie chart data
     const pieData = {
@@ -219,7 +273,7 @@ export default function Home() {
 
         <div className="card" style={{ display: "flex", flexDirection: "column", height: "450px" }}>
           <div className="card-header">
-            <h2 className="card-title">Distribuição de Macronutrientes</h2>
+            <h2 className="card-title">Distribuição de Macronutrientes Semanal</h2>
             <p className="card-description">Porcentagem de proteína, carboidratos e gordura</p>
           </div>
           <div
@@ -281,14 +335,22 @@ export default function Home() {
                   scales: {
                     y: {
                       beginAtZero: true,
-                      title: { display: true, text: "Calorias" },
+                      title: {
+                        display: true,
+                        text: "Calorias",
+                      },
                     },
                     x: {
-                      title: { display: true, text: "Dia do Mês" },
+                      title: {
+                        display: true,
+                        text: "Dia do Mês",
+                      },
                     },
                   },
                   plugins: {
-                    legend: { position: "bottom" },
+                    legend: {
+                      position: "bottom",
+                    },
                     tooltip: {
                       mode: "index",
                       intersect: false,
@@ -297,14 +359,18 @@ export default function Home() {
                           // Use the stored full date (day/month) for the tooltip title
                           if (context[0] && context[0].dataIndex !== undefined) {
                             const dataIndex = context[0].dataIndex
-                            const calorieData = chartData.line.labels.map((_: string, i: number) => ({
+                            interface CalorieDataItem {
+                              fullDate: string;
+                            }
+
+                            const calorieData: CalorieDataItem[] = chartData.line.labels.map((_: unknown, i: number) => ({
                               fullDate:
                                 format(new Date(), "yyyy-MM") +
                                 "-" +
                                 (Number.parseInt(chartData.line.labels[i] as string) < 10
                                   ? "0" + chartData.line.labels[i]
                                   : chartData.line.labels[i]),
-                            }))
+                            }));
 
                             if (calorieData[dataIndex]) {
                               return format(new Date(calorieData[dataIndex].fullDate), "dd/MM/yyyy", { locale: ptBR })
@@ -347,17 +413,20 @@ export default function Home() {
               </thead>
               <tbody>
                 {meals.length > 0 ? (
-                  meals.slice(0, 5).map((meal, index) => (
-                    <tr key={index}>
-                      <td>{format(new Date(meal.date + "T12:00:00Z"), "dd/MM/yyyy", { locale: ptBR })}</td>
-                      <td>{meal.name}</td>
-                      <td>{meal.mealType}</td>
-                      <td>{meal.calories}</td>
-                      <td>{meal.protein}g</td>
-                      <td>{meal.carbs}g</td>
-                      <td>{meal.fat}g</td>
-                    </tr>
-                  ))
+                  meals
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort by date descending
+                    .slice(0, 5)
+                    .map((meal, index) => (
+                      <tr key={meal.id || index}>
+                        <td>{format(new Date(meal.date + "T12:00:00Z"), "dd/MM/yyyy", { locale: ptBR })}</td>
+                        <td>{meal.name}</td>
+                        <td>{meal.mealType}</td>
+                        <td>{meal.calories}</td>
+                        <td>{meal.protein}g</td>
+                        <td>{meal.carbs}g</td>
+                        <td>{meal.fat}g</td>
+                      </tr>
+                    ))
                 ) : (
                   <tr>
                     <td colSpan={7} className="empty-table-message">

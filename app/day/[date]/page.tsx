@@ -8,17 +8,42 @@ import { Trash2, Plus, Loader2, Edit, Check, X } from "lucide-react"
 import { useMealStore, type MealType, type ServingInfo } from "@/lib/store"
 import { FoodSearch } from "@/components/food-search"
 import { ServingSelector } from "@/components/serving-selector"
-import { ApiStatusChecker } from "@/components/api-status-checker"
-
 
 export default function DayPage({ params }: { params: Promise<{ date: string }> }) {
-  const { date } = use(params) 
+  const { date } = use(params)
   const router = useRouter()
-  const { meals, addMeal, removeMeal, updateMeal } = useMealStore()
+  const { meals, addMeal, removeMeal, updateMeal, error: storeError, clearError, fetchMeals } = useMealStore()
 
+  // Force refresh data when page loads and when date changes
   useEffect(() => {
-    console.log("Date parameter in DayPage:", date)
-  }, [date])
+    console.log("DayPage mounted/date changed for date:", date)
+    console.log("Current meals in store:", meals.length)
+
+    // Always fetch fresh data for this specific date
+    const refreshData = async () => {
+      try {
+        await fetchMeals(date)
+        console.log("Data refreshed for date:", date)
+      } catch (error) {
+        console.error("Error refreshing data:", error)
+      }
+    }
+
+    refreshData()
+  }, [date]) // Remove fetchMeals from dependencies to avoid infinite loops
+
+  // Also refresh when returning to this page (visibility change)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log("Page became visible, refreshing data for date:", date)
+        fetchMeals(date)
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
+  }, [date, fetchMeals])
 
   const [mealName, setMealName] = useState("")
   const [originalFoodName, setOriginalFoodName] = useState("")
@@ -40,45 +65,66 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
   const [altMeasures, setAltMeasures] = useState<any[]>([])
   const [foodImage, setFoodImage] = useState<string | null>(null)
 
+  // Filter meals for this specific date
   const dayMeals = meals.filter((meal) => meal.date === date)
 
-  // Grupo de refeições por tipo
+  // Group meals by type - now using only mealType since data is normalized
   const mealsByType = dayMeals.reduce(
     (acc, meal) => {
-      if (!acc[meal.mealType]) {
-        acc[meal.mealType] = []
+      const type = meal.mealType
+      console.log("Processing meal for grouping:", meal.name, "type:", type)
+
+      if (!type) {
+        console.warn("Meal without type:", meal)
+        return acc
       }
-      acc[meal.mealType].push(meal)
+
+      if (!acc[type]) {
+        acc[type] = []
+      }
+      acc[type].push(meal)
       return acc
     },
     {} as Record<MealType, typeof dayMeals>,
   )
 
-  // Calcular totais
+  console.log("Meals grouped by type:", mealsByType)
+
+  // Calculate totals
   const totalCalories = dayMeals.reduce((sum, meal) => sum + meal.calories, 0)
   const totalProtein = dayMeals.reduce((sum, meal) => sum + meal.protein, 0)
   const totalCarbs = dayMeals.reduce((sum, meal) => sum + meal.carbs, 0)
   const totalFat = dayMeals.reduce((sum, meal) => sum + meal.fat, 0)
 
-  const handleAddMeal = () => {
+  const handleAddMeal = async () => {
     if (mealName && calories) {
-      console.log("Adicionar uma refeição para data:", date)
+      console.log("Adding meal for date:", date, "type:", mealType)
 
-      addMeal({
-        date,
-        name: mealName,
-        originalName: originalFoodName || undefined,
-        calories: Number(calories),
-        protein: Number(protein) || 0,
-        carbs: Number(carbs) || 0,
-        fat: Number(fat) || 0,
-        mealType,
-        serving,
-        altMeasures,
-        imageUrl: foodImage || undefined,
-      })
+      try {
+        await addMeal({
+          date,
+          name: mealName,
+          originalName: originalFoodName || undefined,
+          calories: Number(calories),
+          protein: Number(protein) || 0,
+          carbs: Number(carbs) || 0,
+          fat: Number(fat) || 0,
+          mealType,
+          serving,
+          altMeasures,
+          imageUrl: foodImage || undefined,
+        })
 
-      resetForm()
+        console.log("Meal added successfully, refreshing data...")
+
+        // Force refresh meals for this date after adding
+        await fetchMeals(date)
+
+        console.log("Data refreshed after adding meal")
+        resetForm()
+      } catch (error) {
+        console.error("Error adding meal:", error)
+      }
     }
   }
 
@@ -121,7 +167,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || "Falha ao obter informações")
+        throw new Error(errorData.error || "Failed to get nutrition information")
       }
 
       const data = await response.json()
@@ -157,16 +203,15 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
           setAltMeasures(food.alt_measures)
         }
 
-        // Mostra foto da comida, se disponível
         if (food.photo && food.photo.thumb) {
           setFoodImage(food.photo.thumb)
         }
       } else {
-        throw new Error("Não foram encontrados dados nutricionais para essa comida")
+        throw new Error("No nutrition data found for this food")
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ocorreu um erro")
-      console.error("Erro recuperando informações:", err)
+      setError(err instanceof Error ? err.message : "An error occurred")
+      console.error("Error getting nutrition information:", err)
     } finally {
       setLoading(false)
     }
@@ -180,7 +225,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
     setProtein(meal.protein.toString())
     setCarbs(meal.carbs.toString())
     setFat(meal.fat.toString())
-    setMealType(meal.mealType)
+    setMealType(meal.mealType) // Now only using mealType
 
     const mealServing = meal.serving || {
       quantity: 1,
@@ -195,33 +240,62 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
     setIsAddingManually(true)
   }
 
-  const handleUpdateMeal = () => {
-    if (editingMeal && mealName && calories) {
-      const updatedMeal = {
-        ...editingMeal,
-        name: mealName,
-        originalName: originalFoodName || undefined,
-        calories: Number(calories),
-        protein: Number(protein) || 0,
-        carbs: Number(carbs) || 0,
-        fat: Number(fat) || 0,
-        mealType,
-        serving,
-        altMeasures,
-        imageUrl: foodImage || undefined,
-      }
+  const handleUpdateMeal = async () => {
+    if (editingMeal && editingMeal.id && mealName && calories) {
+      console.log("Updating meal:", editingMeal.id, "type:", mealType)
 
-      updateMeal(editingMeal, updatedMeal)
-      resetForm()
+      try {
+        const updatedMeal = {
+          ...editingMeal,
+          name: mealName,
+          originalName: originalFoodName || undefined,
+          calories: Number(calories),
+          protein: Number(protein) || 0,
+          carbs: Number(carbs) || 0,
+          fat: Number(fat) || 0,
+          mealType,
+          serving,
+          altMeasures,
+          imageUrl: foodImage || undefined,
+        }
+
+        await updateMeal(editingMeal.id, updatedMeal)
+
+        console.log("Meal updated successfully, refreshing data...")
+
+        // Force refresh meals for this date after updating
+        await fetchMeals(date)
+
+        console.log("Data refreshed after updating meal")
+        resetForm()
+      } catch (error) {
+        console.error("Error updating meal:", error)
+      }
+    }
+  }
+
+  const handleRemoveMeal = async (meal: any) => {
+    if (meal.id) {
+      console.log("Removing meal:", meal.id)
+
+      try {
+        await removeMeal(meal.id)
+
+        console.log("Meal removed successfully, refreshing data...")
+
+        // Force refresh meals for this date after removing
+        await fetchMeals(date)
+
+        console.log("Data refreshed after removing meal")
+      } catch (error) {
+        console.error("Error removing meal:", error)
+      }
     }
   }
 
   const handleServingChange = useCallback(
     (newServing: ServingInfo, nutritionData: { calories: number; protein: number; carbs: number; fat: number }) => {
-      // Atualiza informações
       setServing(newServing)
-
-      // Atualização dos dados via API
       setCalories(nutritionData.calories.toString())
       setProtein(nutritionData.protein.toString())
       setCarbs(nutritionData.carbs.toString())
@@ -257,8 +331,14 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
         </button>
       </div>
 
-      {/* Add API Status Checker */}
-      <ApiStatusChecker />
+      {storeError && (
+        <div className="error-banner">
+          <p>{storeError}</p>
+          <button onClick={clearError} className="button button-outline">
+            Fechar
+          </button>
+        </div>
+      )}
 
       <div className="grid-layout">
         <div className="card span-two">
@@ -291,7 +371,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                           <tbody>
                             {mealsByType[type].map((meal, index) => {
                               return (
-                                <tr key={index}>
+                                <tr key={meal.id || index}>
                                   <td>
                                     {meal.imageUrl && (
                                       <img
@@ -302,9 +382,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                                     )}
                                   </td>
                                   <td>{meal.name}</td>
-                                  <td>
-                                    {meal.serving ? `${meal.serving.quantity} ${meal.serving.unit}` : "1 porção"}
-                                  </td>
+                                  <td>{meal.serving ? `${meal.serving.quantity} ${meal.serving.unit}` : "1 porção"}</td>
                                   <td>{meal.calories}</td>
                                   <td>{meal.protein}</td>
                                   <td>{meal.carbs}</td>
@@ -320,7 +398,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                                       </button>
                                       <button
                                         className="button-icon"
-                                        onClick={() => removeMeal(meal)}
+                                        onClick={() => handleRemoveMeal(meal)}
                                         title="Excluir refeição"
                                       >
                                         <Trash2 className="icon-small" />
@@ -388,7 +466,8 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                     <ServingSelector
                       initialQuantity={serving.quantity}
                       initialUnit={serving.originalUnit || serving.unit}
-                      foodName={originalFoodName || mealName}
+                      foodName={mealName}
+                      originalFoodName={originalFoodName} // Pass this to determine if from search
                       altMeasures={altMeasures}
                       onServingChange={handleServingChange}
                       calories={Number(calories)}
@@ -584,6 +663,17 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 1rem;
+        }
+        .error-banner {
+          background-color: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #dc2626;
+          padding: 1rem;
+          border-radius: var(--border-radius);
+          margin-bottom: 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
         }
       `}</style>
     </div>
