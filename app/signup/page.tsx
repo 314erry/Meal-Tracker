@@ -170,8 +170,8 @@ export default function SignupPage() {
         <div className="auth-footer">
           <p>
             Já tem uma conta?{" "}
-            <Link href="/login" className="auth-link">
-              Entrar
+            <Link href="/login" legacyBehavior>
+              <a className="auth-link">Entrar</a>
             </Link>
           </p>
         </div>
@@ -183,17 +183,18 @@ export default function SignupPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: #121212;
           padding: 1rem;
         }
 
         .auth-card {
-          background: white;
+          background: #1e1e1e;
           border-radius: 1rem;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-          padding: 2rem;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+          padding: 2.5rem;
           width: 100%;
           max-width: 400px;
+          color: #e8eaed;
         }
 
         .auth-header {
@@ -204,13 +205,20 @@ export default function SignupPage() {
         .auth-title {
           font-size: 2rem;
           font-weight: 700;
-          color: #1f2937;
+          color: #ffffff;
           margin-bottom: 0.5rem;
         }
 
         .auth-description {
-          color: #6b7280;
+          color: #9aa0a6;
           font-size: 0.875rem;
+        }
+
+        .form-label {
+          font-weight: 500;
+          color: #bdc1c6;
+          margin-bottom: 0.25rem;
+          display: inline-block;
         }
 
         .auth-form {
@@ -230,12 +238,29 @@ export default function SignupPage() {
           left: 0.75rem;
           width: 1.25rem;
           height: 1.25rem;
-          color: #9ca3af;
+          color: #5f6368;
           z-index: 1;
         }
 
         .form-input.with-icon {
           padding-left: 2.75rem;
+        }
+
+        .form-input {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          border-radius: 0.5rem;
+          border: 1px solid #3c4043;
+          font-size: 1rem;
+          color: #e8eaed;
+          background-color: #202124;
+          transition: border 0.2s, background 0.2s;
+        }
+
+        .form-input:focus {
+          outline: none;
+          border-color: #10b981;
+          background-color: #2c2c2c;
         }
 
         .password-toggle {
@@ -244,20 +269,44 @@ export default function SignupPage() {
           background: none;
           border: none;
           cursor: pointer;
-          color: #9ca3af;
+          color: #5f6368;
           padding: 0.25rem;
           border-radius: 0.25rem;
           transition: color 0.2s;
         }
 
         .password-toggle:hover {
-          color: #6b7280;
+          color: #e8eaed;
+        }
+
+        .button {
+          padding: 0.75rem 1rem;
+          font-weight: 600;
+          border-radius: 0.5rem;
+          text-align: center;
+          border: none;
+          cursor: pointer;
+          font-size: 1rem;
+        }
+
+        .button-primary {
+          background-color: #10b981;
+          color: white;
+          transition: background 0.3s;
+        }
+
+        .button-primary:hover {
+          background-color: #059669;
+        }
+
+        .full-width {
+          width: 100%;
         }
 
         .error-message {
-          background-color: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #dc2626;
+          background-color: #2c1c1c;
+          border: 1px solid #f87171;
+          color: #fecaca;
           padding: 0.75rem;
           border-radius: 0.5rem;
           font-size: 0.875rem;
@@ -268,17 +317,22 @@ export default function SignupPage() {
           text-align: center;
           margin-top: 1.5rem;
           padding-top: 1.5rem;
-          border-top: 1px solid #e5e7eb;
+          border-top: 1px solid #3c4043;
         }
 
         .auth-link {
-          color: var(--color-primary);
+          color: #10b981;
           text-decoration: none;
           font-weight: 500;
         }
 
         .auth-link:hover {
           text-decoration: underline;
+        }
+
+        .icon-small {
+          width: 1.25rem;
+          height: 1.25rem;
         }
 
         .animate-spin {
