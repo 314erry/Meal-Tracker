@@ -13,71 +13,47 @@ interface BasicCalendarProps {
 
 export function BasicCalendar({ selectedDateStr, onSelectDate }: BasicCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
-  // Get meals data to check which days have meals
   const { meals } = useMealStore()
 
-  // Log props for debugging
   useEffect(() => {
     console.log("Calendar received selectedDateStr:", selectedDateStr)
   }, [selectedDateStr])
 
-  const nextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1))
-  }
-
-  const prevMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1))
-  }
-
-  // Get days in month
-  const getDaysInMonth = (year: number, month: number) => {
-    return new Date(year, month + 1, 0).getDate()
-  }
-
-  // Get day of week for first day of month (0 = Sunday, 6 = Saturday)
-  const getFirstDayOfMonth = (year: number, month: number) => {
-    return new Date(year, month, 1).getDay()
-  }
+  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
+  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
 
   const year = getYear(currentMonth)
   const month = getMonth(currentMonth)
-  const daysInMonth = getDaysInMonth(year, month)
-  const firstDayOfMonth = getFirstDayOfMonth(year, month)
-
-  // Parse the selected date string
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const firstDayOfMonth = new Date(year, month, 1).getDay()
   const selectedDate = parseISO(selectedDateStr)
+  const today = new Date()
 
-  // Create calendar days
   const days = []
 
-  // Add empty cells for days before the first day of the month
   for (let i = 0; i < firstDayOfMonth; i++) {
     days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>)
   }
 
-  // Add days of the month
   for (let day = 1; day <= daysInMonth; day++) {
-    // Create a date string in YYYY-MM-DD format
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-
-    // Check if this day has any meals
     const hasMeals = meals.some((meal) => meal.date === dateStr)
 
-    const today = new Date()
     const isSelected =
-      selectedDate.getDate() === day && selectedDate.getMonth() === month && selectedDate.getFullYear() === year
+      selectedDate.getDate() === day &&
+      selectedDate.getMonth() === month &&
+      selectedDate.getFullYear() === year
 
-    const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
+    const isToday =
+      today.getDate() === day &&
+      today.getMonth() === month &&
+      today.getFullYear() === year
 
     days.push(
       <div
         key={`day-${day}`}
         className={`calendar-day ${isSelected ? "selected" : ""} ${isToday ? "today" : ""}`}
-        onClick={() => {
-          // Log the exact date string being selected
-          console.log("Day clicked, dateStr:", dateStr)
-          onSelectDate(dateStr)
-        }}
+        onClick={() => onSelectDate(dateStr)}
       >
         <span className="day-number">{day}</span>
         {hasMeals && <span className="meal-indicator"></span>}
@@ -88,22 +64,94 @@ export function BasicCalendar({ selectedDateStr, onSelectDate }: BasicCalendarPr
   return (
     <div className="basic-calendar">
       <style jsx>{`
+        .basic-calendar {
+          background-color: var(--background);
+          color: var(--foreground);
+          padding: 1rem;
+          border-radius: 0.5rem;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .calendar-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 1rem;
+        }
+
+        .calendar-month {
+          font-size: 1.2rem;
+          font-weight: bold;
+        }
+
+        .calendar-nav-button {
+          background-color: var(--green-500); /* Ou use sua classe de botão verde */
+          color: white;
+          border: none;
+          padding: 0.25rem 0.5rem;
+          border-radius: 0.375rem;
+          cursor: pointer;
+        }
+
+        .calendar-nav-button:hover {
+          background-color: var(--green-600);
+        }
+
+        .calendar-weekdays {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          text-align: center;
+          font-weight: bold;
+          color: var(--muted-foreground);
+          margin-bottom: 0.5rem;
+        }
+
+        .calendar-grid {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 0.5rem;
+        }
+
         .calendar-day {
-          position: relative;
+          height: 3rem;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 2px;
+          background-color: var(--muted);
+          border-radius: 0.375rem;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
         }
+
+        .calendar-day:hover {
+          background-color: var(--muted-hover);
+        }
+
+        .calendar-day.selected {
+          background-color: var(--green-500);
+          color: white;
+        }
+
+        .calendar-day.today {
+          border: 2px solid var(--green-500);
+        }
+
         .meal-indicator {
           width: 6px;
           height: 6px;
           border-radius: 50%;
-          background-color: var(--color-primary);
+          background-color: var(--green-500);
           display: block;
+          margin-top: 2px;
+        }
+
+        .calendar-day.empty {
+          background: transparent;
+          cursor: default;
         }
       `}</style>
+
       <div className="calendar-header">
         <button onClick={prevMonth} className="calendar-nav-button">
           <ChevronLeft className="icon-small" />

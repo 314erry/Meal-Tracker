@@ -48,14 +48,15 @@ export function UserMenu() {
           gap: 0.5rem;
           padding: 0.5rem 1rem;
           background: transparent;
-          border: 1px solid var(--color-card-border);
-          border-radius: var(--border-radius);
+          border: 1px solid #3c4043;
+          border-radius: 0.5rem;
           cursor: pointer;
           transition: background-color 0.2s;
+          color: #e8eaed;
         }
 
         .user-menu-trigger:hover {
-          background-color: var(--color-background);
+          background-color: #2c2c2c;
         }
 
         .user-menu-dropdown {
@@ -63,12 +64,13 @@ export function UserMenu() {
           top: 100%;
           right: 0;
           margin-top: 0.5rem;
-          background: var(--color-card);
-          border: 1px solid var(--color-card-border);
-          border-radius: var(--border-radius);
-          box-shadow: var(--shadow-lg);
+          background: #1e1e1e;
+          border: 1px solid #3c4043;
+          border-radius: 0.5rem;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
           min-width: 200px;
           z-index: 50;
+          color: #e8eaed;
         }
 
         .user-info {
@@ -78,17 +80,18 @@ export function UserMenu() {
         .user-name {
           font-weight: 600;
           margin: 0;
+          color: #e8eaed;
         }
 
         .user-email {
           font-size: 0.875rem;
-          color: var(--color-muted);
+          color: #9aa0a6;
           margin: 0.25rem 0 0 0;
         }
 
         .menu-divider {
           border: none;
-          border-top: 1px solid var(--color-card-border);
+          border-top: 1px solid #3c4043;
           margin: 0;
         }
 
@@ -103,10 +106,11 @@ export function UserMenu() {
           text-align: left;
           cursor: pointer;
           transition: background-color 0.2s;
+          color: #e8eaed;
         }
 
         .menu-item:hover {
-          background-color: var(--color-background);
+          background-color: #2c2c2c;
         }
       `}</style>
     </div>

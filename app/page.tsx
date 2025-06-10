@@ -249,7 +249,7 @@ export default function Home() {
   const hasMacroData = totalProtein > 0 || totalCarbs > 0 || totalFat > 0
 
   return (
-    <div className="container">
+    <div className="container dark-mode">
       <div className="page-header">
         <h1 className="page-title">Rastreador de Refeições</h1>
         <UserMenu />
@@ -436,7 +436,7 @@ export default function Home() {
                 )}
               </tbody>
             </table>
-            <button className="button button-outline full-width" onClick={() => router.push("/reports")}>
+            <button className="button button-primary full-width" onClick={() => router.push("/reports")}>
               Ver Relatório Completo
             </button>
           </div>
@@ -470,18 +470,96 @@ export default function Home() {
       </div>
 
       <style jsx>{`
-        .empty-chart-message {
+        :global(body) {
+          background-color: #121212;
+          color: #e0e0e0;
+        }
+
+        .dark-mode .card {
+          background-color: #1e1e1e;
+          border: 1px solid #2a2a2a;
+          color: #f0f0f0;
+        }
+
+        .dark-mode .card-header {
+          border-bottom: 1px solid #333;
+        }
+
+        .dark-mode .page-header {
+          border-bottom: 1px solid #2a2a2a;
+          margin-bottom: 1.5rem;
+        }
+
+        .dark-mode .page-title {
+          color: #ffffff;
+        }
+
+        .dark-mode .card-description,
+        .dark-mode .empty-chart-message,
+        .dark-mode .adherence-detail {
+          color: #aaaaaa;
+        }
+
+        .dark-mode .button {
+          background-color: #2d2d2d;
+          color: #ffffff;
+          border: 1px solid #444;
+          padding: 0.75rem 1rem;
+          font-weight: 600;
+          border-radius: 0.5rem;
           text-align: center;
-          color: var(--color-muted);
-          font-size: 0.9rem;
+          cursor: pointer;
+          font-size: 1rem;
+          transition: background 0.3s, color 0.3s;
         }
-        .empty-chart-subtitle {
-          font-size: 0.8rem;
-          margin-top: 0.5rem;
+
+        .dark-mode .button:hover {
+          background-color: #3a3a3a;
         }
-        .adherence-detail {
-          font-size: 0.8rem;
-          color: var(--color-muted);
+
+        .dark-mode .button-primary {
+          background-color: #10b981;
+          color: #ffffff;
+          border: none;
+        }
+
+        .dark-mode .button-primary:hover {
+          background-color: #059669;
+        }
+
+        .dark-mode .button-outline {
+          background-color: transparent;
+          color: #10b981;
+          border: 2px solid #10b981;
+        }
+
+        .dark-mode .button-outline:hover {
+          background-color: #10b981;
+          color: #ffffff;
+        }
+
+        .dark-mode .data-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        .dark-mode .data-table th,
+        .dark-mode .data-table td {
+          border: 1px solid #333;
+          padding: 0.5rem;
+          text-align: left;
+        }
+
+        .dark-mode .data-table th {
+          background-color: #2c2c2c;
+        }
+
+        .dark-mode .data-table tr:nth-child(even) {
+          background-color: #242424;
+        }
+
+        .dark-mode .data-table tr:hover {
+          background-color: #333;
         }
       `}</style>
     </div>
