@@ -251,12 +251,12 @@ export default function Home() {
   return (
     <div className="container dark-mode">
       <div className="page-header">
-        <h1 className="page-title">Rastreador de Refeições</h1>
+        <h1 className="page-title">Diário de Refeições</h1>
         <UserMenu />
       </div>
 
       <div className="grid-layout" style={{ alignItems: "stretch" }}>
-        <div className="card" style={{ display: "flex", flexDirection: "column", height: "450px" }}>
+        <div className="card" style={{ display: "flex", flexDirection: "column", height: "500px"}}>
           <div className="card-header">
             <h2 className="card-title">Calendário</h2>
             <p className="card-description">Selecione um dia para adicionar refeições</p>
@@ -264,14 +264,14 @@ export default function Home() {
           <div className="card-content" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <div style={{ marginBottom: "1rem", transform: "scale(0.85)", transformOrigin: "top center" }}>
               <BasicCalendar selectedDateStr={selectedDateStr} onSelectDate={handleDateSelect} />
-              <button className="button button-primary full-width" onClick={goToMealEntry}>
+              <button className="button button-primary full-width" style={{ marginTop: "1rem" }} onClick={goToMealEntry}>
                 Adicionar Refeições para {format(selectedDate, "d 'de' MMMM, yyyy", { locale: ptBR })}
               </button>
             </div>
           </div>
         </div>
 
-        <div className="card" style={{ display: "flex", flexDirection: "column", height: "450px" }}>
+        <div className="card" style={{ display: "flex", flexDirection: "column", height: "500px" }}>
           <div className="card-header">
             <h2 className="card-title">Distribuição de Macronutrientes Semanal</h2>
             <p className="card-description">Porcentagem de proteína, carboidratos e gordura</p>
@@ -293,7 +293,7 @@ export default function Home() {
                         labels: {
                           boxWidth: 12,
                           padding: 15,
-                          font: { size: 11 },
+                          font: { size: 14 },
                         },
                       },
                       tooltip: {
@@ -436,7 +436,7 @@ export default function Home() {
                 )}
               </tbody>
             </table>
-            <button className="button button-primary full-width" onClick={() => router.push("/reports")}>
+            <button className="button button-primary full-width" style={{ marginTop: "1rem" }} onClick={() => router.push("/reports")}>
               Ver Relatório Completo
             </button>
           </div>
@@ -449,7 +449,7 @@ export default function Home() {
           </div>
           <div
             className="card-content adherence-container"
-            style={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+            style={{ display: "flex", justifyContent: "center", alignItems: "center", marginTop: "3.5rem" }}
           >
             <DonutProgress percentage={adherenceRate} />
             <p className="card-description" style={{ textAlign: "center", marginTop: "1rem" }}>

@@ -67,7 +67,7 @@ export default function SignupPage() {
       <div className="auth-card">
         <div className="auth-header">
           <h1 className="auth-title">Criar Conta</h1>
-          <p className="auth-description">Crie sua conta no Rastreador de Refeições</p>
+          <p className="auth-description">Crie sua conta no Diário de Refeições</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">

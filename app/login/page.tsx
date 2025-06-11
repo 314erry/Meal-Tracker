@@ -41,7 +41,7 @@ export default function LoginPage() {
       <div className="auth-card">
         <div className="auth-header">
           <h1 className="auth-title">Entrar</h1>
-          <p className="auth-description">Entre na sua conta do Rastreador de Refeições</p>
+          <p className="auth-description">Entre na sua conta do Diário de Refeições</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
