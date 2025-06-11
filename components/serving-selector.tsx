@@ -10,6 +10,7 @@ interface ServingSelectorProps {
   initialQuantity: number
   initialUnit: string
   foodName: string
+  originalFoodName?: string // Add this to know if food came from search
   altMeasures?: Array<{
     serving_weight: number
     measure: string
@@ -33,6 +34,7 @@ export function ServingSelector({
   initialQuantity,
   initialUnit,
   foodName,
+  originalFoodName,
   altMeasures,
   onServingChange,
   calories,
@@ -43,10 +45,46 @@ export function ServingSelector({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Determine if this food came from the API search or was manually entered
+  const isFromSearch = Boolean(originalFoodName)
+  const searchFoodName = originalFoodName || foodName
+
   // Fetch nutrition data from API when measure changes
   const fetchNutritionData = useCallback(
     async (newQuantity: number, newUnit: string) => {
-      if (!foodName) return
+      // Only fetch nutrition data if the food came from search
+      if (!isFromSearch) {
+        console.log("Skipping API call for manually entered food:", foodName)
+
+        // For manually entered foods, just calculate proportional calories
+        const baseCalories = calories / initialQuantity
+        const newCalories = Math.round(baseCalories * newQuantity)
+
+        setAdjustedCalories(newCalories)
+
+        // Create a basic serving info object
+        const newServing: ServingInfo = {
+          quantity: newQuantity,
+          unit: newUnit,
+          weight: 100, // Default weight
+        }
+
+        // Calculate proportional nutrition (basic estimation)
+        const ratio = newQuantity / initialQuantity
+        onServingChange(newServing, {
+          calories: newCalories,
+          protein: 0, // We don't have this data for manual entries
+          carbs: 0,
+          fat: 0,
+        })
+
+        return
+      }
+
+      if (!searchFoodName) {
+        console.log("No food name available for API call")
+        return
+      }
 
       setLoading(true)
       setError(null)
@@ -61,13 +99,22 @@ export function ServingSelector({
           }
         }
 
+        console.log(
+          "Fetching nutrition data for:",
+          searchFoodName,
+          "measure:",
+          originalMeasure,
+          "quantity:",
+          newQuantity,
+        )
+
         const response = await fetch("/api/nutritionix/measure", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            foodName,
+            foodName: searchFoodName,
             measure: originalMeasure, // Always use the original English measure for API calls
             quantity: newQuantity,
           }),
@@ -75,6 +122,35 @@ export function ServingSelector({
 
         if (!response.ok) {
           const errorData = await response.json()
+
+          // Handle specific "no foods found" error more gracefully
+          if (errorData.error && errorData.error.includes("couldn't match any of your foods")) {
+            console.log("Food not found in Nutritionix, falling back to proportional calculation")
+
+            // Fall back to proportional calculation
+            const baseCalories = calories / initialQuantity
+            const newCalories = Math.round(baseCalories * newQuantity)
+
+            setAdjustedCalories(newCalories)
+
+            const newServing: ServingInfo = {
+              quantity: newQuantity,
+              unit: newUnit,
+              weight: 100,
+            }
+
+            const ratio = newQuantity / initialQuantity
+            onServingChange(newServing, {
+              calories: newCalories,
+              protein: 0,
+              carbs: 0,
+              fat: 0,
+            })
+
+            setError("Informações nutricionais detalhadas não disponíveis para este alimento")
+            return
+          }
+
           throw new Error(errorData.error || "Failed to get nutrition information")
         }
 
@@ -112,13 +188,34 @@ export function ServingSelector({
           throw new Error("No nutrition data found for this food")
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred")
         console.error("Error getting nutrition information:", err)
+
+        // Fall back to proportional calculation on any error
+        const baseCalories = calories / initialQuantity
+        const newCalories = Math.round(baseCalories * newQuantity)
+
+        setAdjustedCalories(newCalories)
+
+        const newServing: ServingInfo = {
+          quantity: newQuantity,
+          unit: newUnit,
+          weight: 100,
+        }
+
+        const ratio = newQuantity / initialQuantity
+        onServingChange(newServing, {
+          calories: newCalories,
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+        })
+
+        setError("Usando cálculo proporcional - informações detalhadas não disponíveis")
       } finally {
         setLoading(false)
       }
     },
-    [foodName, onServingChange, altMeasures],
+    [searchFoodName, onServingChange, altMeasures, isFromSearch, foodName, calories, initialQuantity],
   )
 
   // Update nutrition when quantity or unit changes
@@ -181,12 +278,21 @@ export function ServingSelector({
         </div>
       </div>
       {error && <p className="error-message">{error}</p>}
+      {!isFromSearch && (
+        <p className="info-message">Alimento adicionado manualmente - usando cálculo proporcional de calorias</p>
+      )}
 
       <style jsx>{`
         .error-message {
-          color: var(--color-error);
+          color: var(--color-warning);
           font-size: 0.75rem;
           margin-top: 0.25rem;
+        }
+        .info-message {
+          color: var(--color-muted);
+          font-size: 0.75rem;
+          margin-top: 0.25rem;
+          font-style: italic;
         }
       `}</style>
     </div>
