@@ -22,6 +22,22 @@ import { UserMenu } from "@/components/user-menu"
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title)
 
+// Função para traduzir os tipos de refeição
+const translateMealType = (type: string): string => {
+  switch (type) {
+    case "Breakfast":
+      return "Café da Manhã"
+    case "Lunch":
+      return "Almoço"
+    case "Dinner":
+      return "Jantar"
+    case "Snack":
+      return "Lanche"
+    default:
+      return type
+  }
+}
+
 export default function Home() {
   const [selectedDateStr, setSelectedDateStr] = useState(format(new Date(), "yyyy-MM-dd"))
   const router = useRouter()
@@ -256,7 +272,7 @@ export default function Home() {
       </div>
 
       <div className="grid-layout" style={{ alignItems: "stretch" }}>
-        <div className="card" style={{ display: "flex", flexDirection: "column", height: "500px"}}>
+        <div className="card" style={{ display: "flex", flexDirection: "column", height: "500px" }}>
           <div className="card-header">
             <h2 className="card-title">Calendário</h2>
             <p className="card-description">Selecione um dia para adicionar refeições</p>
@@ -264,7 +280,11 @@ export default function Home() {
           <div className="card-content" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <div style={{ marginBottom: "1rem", transform: "scale(0.85)", transformOrigin: "top center" }}>
               <BasicCalendar selectedDateStr={selectedDateStr} onSelectDate={handleDateSelect} />
-              <button className="button button-primary full-width" style={{ marginTop: "1rem" }} onClick={goToMealEntry}>
+              <button
+                className="button button-primary full-width"
+                style={{ marginTop: "1rem" }}
+                onClick={goToMealEntry}
+              >
                 Adicionar Refeições para {format(selectedDate, "d 'de' MMMM, yyyy", { locale: ptBR })}
               </button>
             </div>
@@ -360,17 +380,19 @@ export default function Home() {
                           if (context[0] && context[0].dataIndex !== undefined) {
                             const dataIndex = context[0].dataIndex
                             interface CalorieDataItem {
-                              fullDate: string;
+                              fullDate: string
                             }
 
-                            const calorieData: CalorieDataItem[] = chartData.line.labels.map((_: unknown, i: number) => ({
-                              fullDate:
-                                format(new Date(), "yyyy-MM") +
-                                "-" +
-                                (Number.parseInt(chartData.line.labels[i] as string) < 10
-                                  ? "0" + chartData.line.labels[i]
-                                  : chartData.line.labels[i]),
-                            }));
+                            const calorieData: CalorieDataItem[] = chartData.line.labels.map(
+                              (_: unknown, i: number) => ({
+                                fullDate:
+                                  format(new Date(), "yyyy-MM") +
+                                  "-" +
+                                  (Number.parseInt(chartData.line.labels[i] as string) < 10
+                                    ? "0" + chartData.line.labels[i]
+                                    : chartData.line.labels[i]),
+                              }),
+                            )
 
                             if (calorieData[dataIndex]) {
                               return format(new Date(calorieData[dataIndex].fullDate), "dd/MM/yyyy", { locale: ptBR })
@@ -420,7 +442,7 @@ export default function Home() {
                       <tr key={meal.id || index}>
                         <td>{format(new Date(meal.date + "T12:00:00Z"), "dd/MM/yyyy", { locale: ptBR })}</td>
                         <td>{meal.name}</td>
-                        <td>{meal.mealType}</td>
+                        <td>{translateMealType(meal.mealType)}</td>
                         <td>{meal.calories}</td>
                         <td>{meal.protein}g</td>
                         <td>{meal.carbs}g</td>
@@ -436,7 +458,11 @@ export default function Home() {
                 )}
               </tbody>
             </table>
-            <button className="button button-primary full-width" style={{ marginTop: "1rem" }} onClick={() => router.push("/reports")}>
+            <button
+              className="button button-primary full-width"
+              style={{ marginTop: "1rem" }}
+              onClick={() => router.push("/reports")}
+            >
               Ver Relatório Completo
             </button>
           </div>

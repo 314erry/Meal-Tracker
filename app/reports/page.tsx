@@ -21,6 +21,22 @@ import { Pie, Bar } from "react-chartjs-2"
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title)
 
+// Função para traduzir os tipos de refeição
+const translateMealType = (type: string): string => {
+  switch (type) {
+    case "Breakfast":
+      return "Café da Manhã"
+    case "Lunch":
+      return "Almoço"
+    case "Dinner":
+      return "Jantar"
+    case "Snack":
+      return "Lanche"
+    default:
+      return type
+  }
+}
+
 export default function ReportsPage() {
   const router = useRouter()
   const { meals } = useMealStore()
@@ -438,7 +454,7 @@ export default function ReportsPage() {
                   <tr key={index}>
                     <td>{format(new Date(meal.date + "T12:00:00Z"), "dd/MM/yyyy", { locale: ptBR })}</td>
                     <td>{meal.name}</td>
-                    <td>{meal.mealType}</td>
+                    <td>{translateMealType(meal.mealType)}</td>
                     <td>{meal.calories}</td>
                     <td>{meal.protein}</td>
                     <td>{meal.carbs}</td>
