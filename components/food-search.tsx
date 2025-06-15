@@ -1,45 +1,45 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Search, Loader2, AlertCircle, Globe } from "lucide-react"
+import { useState } from "react";
+import { Search, Loader2, AlertCircle, Globe } from "lucide-react";
 
 interface FoodItem {
-  food_name: string
-  original_food_name?: string
-  nix_item_id?: string
-  nf_calories?: number
+  food_name: string;
+  original_food_name?: string;
+  nix_item_id?: string;
+  nf_calories?: number;
   photo?: {
-    thumb: string
-  }
+    thumb: string;
+  };
 }
 
 interface FoodSearchProps {
-  onSelectFood: (foodName: string, originalFoodName?: string) => void
+  onSelectFood: (foodName: string, originalFoodName?: string) => void;
 }
 
 export function FoodSearch({ onSelectFood }: FoodSearchProps) {
-  const [query, setQuery] = useState("")
-  const [results, setResults] = useState<FoodItem[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<FoodItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [translationInfo, setTranslationInfo] = useState<{
-    original: string
-    translated: string
-    wasTranslated: boolean
-  } | null>(null)
+    original: string;
+    translated: string;
+    wasTranslated: boolean;
+  } | null>(null);
 
   const searchFood = async () => {
-    if (!query.trim()) return
+    if (!query.trim()) return;
 
-    setLoading(true)
-    setError(null)
-    setResults([])
-    setTranslationInfo(null)
+    setLoading(true);
+    setError(null);
+    setResults([]);
+    setTranslationInfo(null);
 
     try {
-      console.log("Searching for food with query:", query)
+      console.log("Searching for food with query:", query);
 
       const response = await fetch("/api/nutritionix/search", {
         method: "POST",
@@ -47,52 +47,59 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ query }),
-      })
+      });
 
-      console.log("Search response status:", response.status)
+      console.log("Search response status:", response.status);
 
-      let data
+      let data;
       try {
-        data = await response.json()
+        data = await response.json();
       } catch (e) {
-        console.error("Failed to parse response:", e)
-        const text = await response.text()
-        console.error("Received non-JSON response:", text)
-        throw new Error("Received invalid response format from server")
+        console.error("Failed to parse response:", e);
+        const text = await response.text();
+        console.error("Received non-JSON response:", text);
+        throw new Error("Received invalid response format from server");
       }
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to search for food")
+        throw new Error(data.error || "Failed to search for food");
       }
 
-      console.log("Search results:", data)
+      console.log("Search results:", data);
 
       // Combine common foods and branded foods
-      const combinedResults = [...(data.common || []), ...(data.branded || [])].slice(0, 10) // Limit to 10 results for better UX
+      const combinedResults = [
+        ...(data.common || []),
+        ...(data.branded || []),
+      ].slice(0, 10); // Limit to 10 results for better UX
 
-      setResults(combinedResults)
+      setResults(combinedResults);
 
       // Set translation info if available
       if (data.translation && data.translation.wasTranslated) {
-        setTranslationInfo(data.translation)
+        setTranslationInfo(data.translation);
       }
     } catch (err) {
-      console.error("Error searching for food:", err)
-      setError(err instanceof Error ? err.message : "An error occurred while searching for food")
+      console.error("Error searching for food:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while searching for food"
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    searchFood()
-  }
+    e.preventDefault();
+    searchFood();
+  };
 
   const handleSelectFood = (item: FoodItem) => {
     // Pass both the translated and original food name
-    onSelectFood(item.food_name, item.original_food_name)
-  }
+    onSelectFood(item.food_name, item.original_food_name);
+  };
 
   return (
     <div className="food-search">
@@ -102,11 +109,19 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search for a food (e.g., frango, maçã)"
+            placeholder="Busque por uma comida (ex:frango, maçã)"
             className="form-input"
           />
-          <button type="submit" className="button button-primary search-button" disabled={loading}>
-            {loading ? <Loader2 className="icon-small animate-spin" /> : <Search className="icon-small" />}
+          <button
+            type="submit"
+            className="button button-primary search-button"
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="icon-small animate-spin" />
+            ) : (
+              <Search className="icon-small" />
+            )}
           </button>
         </div>
       </form>
@@ -115,7 +130,8 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
         <div className="translation-info">
           <Globe className="icon-small" />
           <span>
-            Translated: "{translationInfo.original}" → "{translationInfo.translated}"
+            Translated: "{translationInfo.original}" → "
+            {translationInfo.translated}"
           </span>
         </div>
       )}
@@ -132,14 +148,26 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
           <h3 className="results-title">Search Results</h3>
           <ul className="results-list">
             {results.map((item, index) => (
-              <li key={index} className="result-item" onClick={() => handleSelectFood(item)}>
+              <li
+                key={index}
+                className="result-item"
+                onClick={() => handleSelectFood(item)}
+              >
                 <div className="result-content">
                   {item.photo?.thumb && (
-                    <img src={item.photo.thumb || "/placeholder.svg"} alt={item.food_name} className="food-thumbnail" />
+                    <img
+                      src={item.photo.thumb || "/placeholder.svg"}
+                      alt={item.food_name}
+                      className="food-thumbnail"
+                    />
                   )}
                   <div className="food-info">
                     <span className="food-name">{item.food_name}</span>
-                    {item.nf_calories && <span className="food-calories">{Math.round(item.nf_calories)} calories</span>}
+                    {item.nf_calories && (
+                      <span className="food-calories">
+                        {Math.round(item.nf_calories)} calories
+                      </span>
+                    )}
                   </div>
                 </div>
               </li>
@@ -265,5 +293,5 @@ export function FoodSearch({ onSelectFood }: FoodSearchProps) {
         }
       `}</style>
     </div>
-  )
+  );
 }

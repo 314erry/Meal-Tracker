@@ -18,13 +18,30 @@ import {
   Title,
 } from "chart.js"
 import { Pie, Line } from "react-chartjs-2"
+import { UserMenu } from "@/components/user-menu"
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title)
+
+// Função para traduzir os tipos de refeição
+const translateMealType = (type: string): string => {
+  switch (type) {
+    case "Breakfast":
+      return "Café da Manhã"
+    case "Lunch":
+      return "Almoço"
+    case "Dinner":
+      return "Jantar"
+    case "Snack":
+      return "Lanche"
+    default:
+      return type
+  }
+}
 
 export default function Home() {
   const [selectedDateStr, setSelectedDateStr] = useState(format(new Date(), "yyyy-MM-dd"))
   const router = useRouter()
-  const { meals } = useMealStore()
+  const { meals, fetchMeals } = useMealStore()
   const [chartData, setChartData] = useState<{ pie: any; line: any }>({ pie: null, line: null })
   const selectedDate = new Date(selectedDateStr + "T12:00:00Z")
   const [weekRangeDisplay, setWeekRangeDisplay] = useState("")
@@ -36,6 +53,45 @@ export default function Home() {
   const [totalCarbs, setTotalCarbs] = useState(0)
   const [totalFat, setTotalFat] = useState(0)
 
+  // Force refresh ALL meals when homepage loads
+  useEffect(() => {
+    console.log("Homepage mounted - fetching ALL meals")
+    const refreshAllMeals = async () => {
+      try {
+        // Fetch ALL meals (no date filter) to ensure we have complete data
+        await fetchMeals()
+        console.log("All meals refreshed for homepage")
+      } catch (error) {
+        console.error("Error refreshing all meals:", error)
+      }
+    }
+
+    refreshAllMeals()
+  }, [fetchMeals])
+
+  // Also refresh when page becomes visible (user returns from other pages)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log("Homepage became visible - refreshing all meals")
+        fetchMeals() // Fetch all meals when returning to homepage
+      }
+    }
+
+    const handleFocus = () => {
+      console.log("Homepage focused - refreshing all meals")
+      fetchMeals() // Fetch all meals when window gets focus
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    window.addEventListener("focus", handleFocus)
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      window.removeEventListener("focus", handleFocus)
+    }
+  }, [fetchMeals])
+
   const handleDateSelect = (dateStr: string) => {
     setSelectedDateStr(dateStr)
   }
@@ -46,6 +102,8 @@ export default function Home() {
 
   // Calculate weekly data and update state
   useEffect(() => {
+    console.log("Calculating charts and stats with", meals.length, "total meals")
+
     // Get the current week's start and end dates
     const today = new Date()
     const weekStart = startOfWeek(today, { weekStartsOn: 0 }) // 0 = Sunday
@@ -75,11 +133,19 @@ export default function Home() {
       return mealDate >= weekStart && mealDate <= weekEnd
     })
 
+    console.log("Current week meals:", currentWeekMeals.length)
+    console.log(
+      "Week meals dates:",
+      currentWeekMeals.map((m) => m.date),
+    )
+
     // Calculate totals based on current week's meals
     const weekProtein = currentWeekMeals.reduce((sum, meal) => sum + meal.protein, 0)
     const weekCarbs = currentWeekMeals.reduce((sum, meal) => sum + meal.carbs, 0)
     const weekFat = currentWeekMeals.reduce((sum, meal) => sum + meal.fat, 0)
     const weekCalories = currentWeekMeals.reduce((sum, meal) => sum + meal.calories, 0)
+
+    console.log("Week totals - Calories:", weekCalories, "Protein:", weekProtein, "Carbs:", weekCarbs, "Fat:", weekFat)
 
     // Update state with calculated values
     setTotalProtein(weekProtein)
@@ -109,6 +175,11 @@ export default function Home() {
         target: dailyCalorieTarget,
       }
     })
+
+    console.log(
+      "Monthly calorie data:",
+      calorieData.filter((d) => d.calories > 0),
+    )
 
     // Create pie chart data
     const pieData = {
@@ -194,11 +265,14 @@ export default function Home() {
   const hasMacroData = totalProtein > 0 || totalCarbs > 0 || totalFat > 0
 
   return (
-    <div className="container">
-      <h1 className="page-title">Rastreador de Refeições</h1>
+    <div className="container dark-mode">
+      <div className="page-header">
+        <h1 className="page-title">Diário de Refeições</h1>
+        <UserMenu />
+      </div>
 
       <div className="grid-layout" style={{ alignItems: "stretch" }}>
-        <div className="card" style={{ display: "flex", flexDirection: "column", height: "450px" }}>
+        <div className="card" style={{ display: "flex", flexDirection: "column", height: "500px" }}>
           <div className="card-header">
             <h2 className="card-title">Calendário</h2>
             <p className="card-description">Selecione um dia para adicionar refeições</p>
@@ -206,16 +280,20 @@ export default function Home() {
           <div className="card-content" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <div style={{ marginBottom: "1rem", transform: "scale(0.85)", transformOrigin: "top center" }}>
               <BasicCalendar selectedDateStr={selectedDateStr} onSelectDate={handleDateSelect} />
-              <button className="button button-primary full-width" onClick={goToMealEntry}>
+              <button
+                className="button button-primary full-width"
+                style={{ marginTop: "1rem" }}
+                onClick={goToMealEntry}
+              >
                 Adicionar Refeições para {format(selectedDate, "d 'de' MMMM, yyyy", { locale: ptBR })}
               </button>
             </div>
           </div>
         </div>
 
-        <div className="card" style={{ display: "flex", flexDirection: "column", height: "450px" }}>
+        <div className="card" style={{ display: "flex", flexDirection: "column", height: "500px" }}>
           <div className="card-header">
-            <h2 className="card-title">Distribuição de Macronutrientes</h2>
+            <h2 className="card-title">Distribuição de Macronutrientes Semanal</h2>
             <p className="card-description">Porcentagem de proteína, carboidratos e gordura</p>
           </div>
           <div
@@ -235,7 +313,7 @@ export default function Home() {
                         labels: {
                           boxWidth: 12,
                           padding: 15,
-                          font: { size: 11 },
+                          font: { size: 14 },
                         },
                       },
                       tooltip: {
@@ -277,14 +355,22 @@ export default function Home() {
                   scales: {
                     y: {
                       beginAtZero: true,
-                      title: { display: true, text: "Calorias" },
+                      title: {
+                        display: true,
+                        text: "Calorias",
+                      },
                     },
                     x: {
-                      title: { display: true, text: "Dia do Mês" },
+                      title: {
+                        display: true,
+                        text: "Dia do Mês",
+                      },
                     },
                   },
                   plugins: {
-                    legend: { position: "bottom" },
+                    legend: {
+                      position: "bottom",
+                    },
                     tooltip: {
                       mode: "index",
                       intersect: false,
@@ -293,14 +379,20 @@ export default function Home() {
                           // Use the stored full date (day/month) for the tooltip title
                           if (context[0] && context[0].dataIndex !== undefined) {
                             const dataIndex = context[0].dataIndex
-                            const calorieData = chartData.line.labels.map((_: string, i: number) => ({
-                              fullDate:
-                                format(new Date(), "yyyy-MM") +
-                                "-" +
-                                (Number.parseInt(chartData.line.labels[i] as string) < 10
-                                  ? "0" + chartData.line.labels[i]
-                                  : chartData.line.labels[i]),
-                            }))
+                            interface CalorieDataItem {
+                              fullDate: string
+                            }
+
+                            const calorieData: CalorieDataItem[] = chartData.line.labels.map(
+                              (_: unknown, i: number) => ({
+                                fullDate:
+                                  format(new Date(), "yyyy-MM") +
+                                  "-" +
+                                  (Number.parseInt(chartData.line.labels[i] as string) < 10
+                                    ? "0" + chartData.line.labels[i]
+                                    : chartData.line.labels[i]),
+                              }),
+                            )
 
                             if (calorieData[dataIndex]) {
                               return format(new Date(calorieData[dataIndex].fullDate), "dd/MM/yyyy", { locale: ptBR })
@@ -343,17 +435,20 @@ export default function Home() {
               </thead>
               <tbody>
                 {meals.length > 0 ? (
-                  meals.slice(0, 5).map((meal, index) => (
-                    <tr key={index}>
-                      <td>{format(new Date(meal.date + "T12:00:00Z"), "dd/MM/yyyy", { locale: ptBR })}</td>
-                      <td>{meal.name}</td>
-                      <td>{meal.mealType}</td>
-                      <td>{meal.calories}</td>
-                      <td>{meal.protein}g</td>
-                      <td>{meal.carbs}g</td>
-                      <td>{meal.fat}g</td>
-                    </tr>
-                  ))
+                  meals
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Sort by date descending
+                    .slice(0, 5)
+                    .map((meal, index) => (
+                      <tr key={meal.id || index}>
+                        <td>{format(new Date(meal.date + "T12:00:00Z"), "dd/MM/yyyy", { locale: ptBR })}</td>
+                        <td>{meal.name}</td>
+                        <td>{translateMealType(meal.mealType)}</td>
+                        <td>{meal.calories}</td>
+                        <td>{meal.protein}g</td>
+                        <td>{meal.carbs}g</td>
+                        <td>{meal.fat}g</td>
+                      </tr>
+                    ))
                 ) : (
                   <tr>
                     <td colSpan={7} className="empty-table-message">
@@ -363,7 +458,11 @@ export default function Home() {
                 )}
               </tbody>
             </table>
-            <button className="button button-outline full-width" onClick={() => router.push("/reports")}>
+            <button
+              className="button button-primary full-width"
+              style={{ marginTop: "1rem" }}
+              onClick={() => router.push("/reports")}
+            >
               Ver Relatório Completo
             </button>
           </div>
@@ -376,7 +475,7 @@ export default function Home() {
           </div>
           <div
             className="card-content adherence-container"
-            style={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+            style={{ display: "flex", justifyContent: "center", alignItems: "center", marginTop: "3.5rem" }}
           >
             <DonutProgress percentage={adherenceRate} />
             <p className="card-description" style={{ textAlign: "center", marginTop: "1rem" }}>
@@ -397,18 +496,96 @@ export default function Home() {
       </div>
 
       <style jsx>{`
-        .empty-chart-message {
+        :global(body) {
+          background-color: #121212;
+          color: #e0e0e0;
+        }
+
+        .dark-mode .card {
+          background-color: #1e1e1e;
+          border: 1px solid #2a2a2a;
+          color: #f0f0f0;
+        }
+
+        .dark-mode .card-header {
+          border-bottom: 1px solid #333;
+        }
+
+        .dark-mode .page-header {
+          border-bottom: 1px solid #2a2a2a;
+          margin-bottom: 1.5rem;
+        }
+
+        .dark-mode .page-title {
+          color: #ffffff;
+        }
+
+        .dark-mode .card-description,
+        .dark-mode .empty-chart-message,
+        .dark-mode .adherence-detail {
+          color: #aaaaaa;
+        }
+
+        .dark-mode .button {
+          background-color: #2d2d2d;
+          color: #ffffff;
+          border: 1px solid #444;
+          padding: 0.75rem 1rem;
+          font-weight: 600;
+          border-radius: 0.5rem;
           text-align: center;
-          color: var(--color-muted);
-          font-size: 0.9rem;
+          cursor: pointer;
+          font-size: 1rem;
+          transition: background 0.3s, color 0.3s;
         }
-        .empty-chart-subtitle {
-          font-size: 0.8rem;
-          margin-top: 0.5rem;
+
+        .dark-mode .button:hover {
+          background-color: #3a3a3a;
         }
-        .adherence-detail {
-          font-size: 0.8rem;
-          color: var(--color-muted);
+
+        .dark-mode .button-primary {
+          background-color: #10b981;
+          color: #ffffff;
+          border: none;
+        }
+
+        .dark-mode .button-primary:hover {
+          background-color: #059669;
+        }
+
+        .dark-mode .button-outline {
+          background-color: transparent;
+          color: #10b981;
+          border: 2px solid #10b981;
+        }
+
+        .dark-mode .button-outline:hover {
+          background-color: #10b981;
+          color: #ffffff;
+        }
+
+        .dark-mode .data-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        .dark-mode .data-table th,
+        .dark-mode .data-table td {
+          border: 1px solid #333;
+          padding: 0.5rem;
+          text-align: left;
+        }
+
+        .dark-mode .data-table th {
+          background-color: #2c2c2c;
+        }
+
+        .dark-mode .data-table tr:nth-child(even) {
+          background-color: #242424;
+        }
+
+        .dark-mode .data-table tr:hover {
+          background-color: #333;
         }
       `}</style>
     </div>

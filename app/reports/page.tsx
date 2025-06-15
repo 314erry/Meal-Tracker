@@ -21,6 +21,22 @@ import { Pie, Bar } from "react-chartjs-2"
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title)
 
+// Função para traduzir os tipos de refeição
+const translateMealType = (type: string): string => {
+  switch (type) {
+    case "Breakfast":
+      return "Café da Manhã"
+    case "Lunch":
+      return "Almoço"
+    case "Dinner":
+      return "Jantar"
+    case "Snack":
+      return "Lanche"
+    default:
+      return type
+  }
+}
+
 export default function ReportsPage() {
   const router = useRouter()
   const { meals } = useMealStore()
@@ -193,7 +209,7 @@ export default function ReportsPage() {
   const hasMacroData = totalProtein > 0 || totalCarbs > 0 || totalFat > 0
 
   return (
-    <div className="container">
+    <div className="container dark-mode">
       <div className="page-header">
         <h1 className="page-title">Relatório Mensal</h1>
         <button className="button button-outline" onClick={() => router.push("/")}>
@@ -438,7 +454,7 @@ export default function ReportsPage() {
                   <tr key={index}>
                     <td>{format(new Date(meal.date + "T12:00:00Z"), "dd/MM/yyyy", { locale: ptBR })}</td>
                     <td>{meal.name}</td>
-                    <td>{meal.mealType}</td>
+                    <td>{translateMealType(meal.mealType)}</td>
                     <td>{meal.calories}</td>
                     <td>{meal.protein}</td>
                     <td>{meal.carbs}</td>
@@ -453,25 +469,314 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      <style jsx>{`
-        .empty-chart-message {
+      <style jsx global>{`
+        /* Tema Dark Global - aplicado a toda a aplicação */
+        :global(body), :global(html), :global(#__next) {
+          background-color: #121212 !important;
+          color: #e8eaed !important;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* Container principal */
+        .container {
+          background-color: transparent !important;
+          color: inherit !important;
+          min-height: 100vh;
+          padding: 1rem;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        /* Cards */
+        .dark-mode .card {
+          background-color: #1e1e1e !important;
+          border: 1px solid #2a2a2a !important;
+          color: #f0f0f0 !important;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+          margin-bottom: 1.5rem;
+        }
+
+        .dark-mode .card-header {
+          border-bottom: 1px solid #333 !important;
+          padding: 1rem;
+        }
+
+        .dark-mode .card-content {
+          padding: 1rem;
+        }
+
+        /* Cabeçalhos */
+        .dark-mode .page-header {
+          border-bottom: 1px solid #2a2a2a !important;
+          margin-bottom: 1.5rem;
+          padding-bottom: 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .dark-mode .page-title,
+        .dark-mode .card-title {
+          color: #ffffff !important;
+          margin: 0;
+          font-size: 1.5rem;
+          font-weight: 600;
+        }
+
+        .dark-mode .card-description,
+        .dark-mode .empty-table-message,
+        .dark-mode .empty-chart-message,
+        .dark-mode .empty-data-message,
+        .dark-mode .adherence-description,
+        .dark-mode .adherence-detail {
+          color: #aaaaaa !important;
+        }
+
+        /* Seletor de mês */
+        .select-container {
+          margin-bottom: 2rem;
+          display: flex;
+          justify-content: center;
+        }
+
+        .dark-mode .month-select {
+          background-color: #202124 !important;
+          border: 1px solid #3c4043 !important;
+          color: #e8eaed !important;
+          padding: 0.75rem 1rem;
+          border-radius: 6px;
+          font-size: 1rem;
+          min-width: 200px;
+          cursor: pointer;
+        }
+
+        .dark-mode .month-select:focus {
+          border-color: #10b981 !important;
+          outline: none;
+          box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Botões */
+        .dark-mode .button {
+          background-color: #2d2d2d !important;
+          color: #ffffff !important;
+          border: 1px solid #444 !important;
+          padding: 0.75rem 1rem;
+          font-weight: 600;
+          border-radius: 6px;
           text-align: center;
-          color: var(--color-muted);
+          cursor: pointer;
+          font-size: 1rem;
+          transition: all 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          text-decoration: none;
+        }
+
+        .dark-mode .button:hover {
+          background-color: #3a3a3a !important;
+          transform: translateY(-1px);
+        }
+
+        .dark-mode .button-primary {
+          background-color: #10b981 !important;
+          color: #ffffff !important;
+          border: none !important;
+        }
+
+        .dark-mode .button-primary:hover {
+          background-color: #059669 !important;
+        }
+
+        .dark-mode .button-outline {
+          background-color: transparent !important;
+          color: #10b981 !important;
+          border: 2px solid #10b981 !important;
+        }
+
+        .dark-mode .button-outline:hover {
+          background-color: #10b981 !important;
+          color: #ffffff !important;
+        }
+
+        /* Tabelas */
+        .dark-mode .data-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 1rem;
+        }
+
+        .dark-mode .data-table th,
+        .dark-mode .data-table td {
+          border: 1px solid #333 !important;
+          padding: 0.75rem 0.5rem;
+          text-align: left;
+          color: #e8eaed !important;
+        }
+
+        .dark-mode .data-table th {
+          background-color: #2c2c2c !important;
+          font-weight: 600;
+          color: #ffffff !important;
+        }
+
+        .dark-mode .data-table tr:nth-child(even) {
+          background-color: #242424 !important;
+        }
+
+        .dark-mode .data-table tr:hover {
+          background-color: #333 !important;
+        }
+
+        /* Resumo nutricional */
+        .nutrition-summary {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 1.5rem;
+          margin-top: 1rem;
+        }
+
+        .nutrition-item {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1rem;
+          background-color: #242424;
+          border-radius: 8px;
+          border: 1px solid #333;
+        }
+
+        .nutrition-icon {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          font-size: 0.9rem;
+          color: #ffffff;
+          text-align: center;
+        }
+
+        .nutrition-icon.calories {
+          background-color: #10b981;
+        }
+
+        .nutrition-icon.protein {
+          background-color: #3b82f6;
+        }
+
+        .nutrition-icon.carbs {
+          background-color: #f59e0b;
+        }
+
+        .nutrition-icon.fat {
+          background-color: #ef4444;
+        }
+
+        .nutrition-details h3 {
+          margin: 0 0 0.25rem 0;
+          color: #ffffff;
+          font-size: 1rem;
+          font-weight: 600;
+        }
+
+        .nutrition-details p {
+          margin: 0;
+          color: #aaaaaa;
+          font-size: 0.875rem;
+        }
+
+        /* Layout */
+        .grid-layout {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+        }
+
+        .full-width-section {
+          margin-bottom: 2rem;
+        }
+
+        .chart-container {
+          min-height: 300px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .adherence-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+        }
+
+        /* Mensagens vazias */
+        .empty-chart-message,
+        .empty-data-message {
+          text-align: center;
+          color: #aaaaaa !important;
           font-size: 0.9rem;
           padding: 2rem 0;
         }
+
         .empty-chart-subtitle {
           font-size: 0.8rem;
           margin-top: 0.5rem;
+          color: #888888 !important;
         }
-        .empty-data-message {
+
+        .empty-table-message {
           text-align: center;
-          color: var(--color-muted);
-          padding: 2rem 0;
+          color: #aaaaaa !important;
+          padding: 2rem;
+          font-style: italic;
         }
-        .adherence-detail {
-          font-size: 0.8rem;
-          color: var(--color-muted);
+
+        /* Variáveis CSS para compatibilidade */
+        :root {
+          --color-primary: #10b981;
+          --color-muted: #aaaaaa;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+          .grid-layout {
+            grid-template-columns: 1fr;
+          }
+          
+          .nutrition-summary {
+            grid-template-columns: 1fr;
+          }
+          
+          .page-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+          }
+          
+          .container {
+            padding: 0.5rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .nutrition-item {
+            flex-direction: column;
+            text-align: center;
+          }
+          
+          .nutrition-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 0.8rem;
+          }
         }
       `}</style>
     </div>
