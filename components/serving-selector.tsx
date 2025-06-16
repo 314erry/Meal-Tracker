@@ -40,6 +40,8 @@ export function ServingSelector({
   calories,
 }: ServingSelectorProps) {
   const [quantity, setQuantity] = useState(initialQuantity)
+  const [tempQuantity, setTempQuantity] = useState(initialQuantity.toString())
+  const [isEditing, setIsEditing] = useState(false)
   const [unit, setUnit] = useState(initialUnit)
   const [adjustedCalories, setAdjustedCalories] = useState(calories)
   const [loading, setLoading] = useState(false)
@@ -232,10 +234,40 @@ export function ServingSelector({
     return () => clearTimeout(timer)
   }, [quantity, unit, fetchNutritionData, initialQuantity, initialUnit])
 
-  // Handle quantity change
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuantity = Number.parseFloat(e.target.value) || 1
-    setQuantity(newQuantity)
+  // Handle quantity input changes during editing
+  const handleQuantityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setTempQuantity(value)
+  }
+
+  // Handle when user focuses on the quantity input
+  const handleQuantityFocus = () => {
+    setIsEditing(true)
+    setTempQuantity(quantity.toString())
+  }
+
+  // Handle when user leaves the quantity input
+  const handleQuantityBlur = () => {
+    setIsEditing(false)
+
+    // Parse the temporary value
+    const newQuantity = Number.parseFloat(tempQuantity)
+
+    // If invalid, empty, or zero, reset to 1
+    if (isNaN(newQuantity) || newQuantity <= 0 || tempQuantity.trim() === "") {
+      setQuantity(1)
+      setTempQuantity("1")
+    } else {
+      setQuantity(newQuantity)
+      setTempQuantity(newQuantity.toString())
+    }
+  }
+
+  // Handle Enter key press to confirm input
+  const handleQuantityKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.currentTarget.blur() // This will trigger handleQuantityBlur
+    }
   }
 
   // Handle unit change
@@ -251,8 +283,11 @@ export function ServingSelector({
             type="number"
             min="0.1"
             step="0.1"
-            value={quantity}
-            onChange={handleQuantityChange}
+            value={isEditing ? tempQuantity : quantity}
+            onChange={handleQuantityInputChange}
+            onFocus={handleQuantityFocus}
+            onBlur={handleQuantityBlur}
+            onKeyPress={handleQuantityKeyPress}
             className="form-input"
           />
         </div>
