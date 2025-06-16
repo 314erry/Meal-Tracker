@@ -68,6 +68,18 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
   // Filter meals for this specific date
   const dayMeals = meals.filter((meal) => meal.date === date)
 
+  // Check if the meal being edited still exists
+  useEffect(() => {
+    if (editingMeal && editingMeal.id) {
+      const mealStillExists = dayMeals.find((meal) => meal.id === editingMeal.id)
+      if (!mealStillExists) {
+        console.log("Meal being edited was deleted, resetting form")
+        setError("A refeição que você estava editando foi excluída.")
+        resetForm()
+      }
+    }
+  }, [dayMeals, editingMeal])
+
   // Group meals by type - now using only mealType since data is normalized
   const mealsByType = dayMeals.reduce(
     (acc, meal) => {
@@ -145,6 +157,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
     setAltMeasures([])
     setFoodImage(null)
     setEditingMeal(null)
+    setError(null) // Clear any errors when resetting
   }
 
   const handleSelectFood = async (foodName: string, originalName?: string) => {
@@ -218,6 +231,9 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
   }
 
   const handleEditMeal = (meal: any) => {
+    // Clear any previous errors
+    setError(null)
+
     setEditingMeal(meal)
     setMealName(meal.name)
     setOriginalFoodName(meal.originalName || "")
@@ -241,35 +257,64 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
   }
 
   const handleUpdateMeal = async () => {
-    if (editingMeal && editingMeal.id && mealName && calories) {
-      console.log("Updating meal:", editingMeal.id, "type:", mealType)
+    if (!editingMeal || !editingMeal.id) {
+      setError("Erro: Nenhuma refeição selecionada para edição")
+      return
+    }
 
-      try {
-        const updatedMeal = {
-          ...editingMeal,
-          name: mealName,
-          originalName: originalFoodName || undefined,
-          calories: Number(calories),
-          protein: Number(protein) || 0,
-          carbs: Number(carbs) || 0,
-          fat: Number(fat) || 0,
-          mealType,
-          serving,
-          altMeasures,
-          imageUrl: foodImage || undefined,
-        }
+    // Check if the meal still exists before trying to update
+    const mealStillExists = dayMeals.find((meal) => meal.id === editingMeal.id)
+    if (!mealStillExists) {
+      setError("Esta refeição foi excluída e não pode mais ser editada.")
+      resetForm()
+      return
+    }
 
-        await updateMeal(editingMeal.id, updatedMeal)
+    if (!mealName || !calories) {
+      setError("Nome da refeição e calorias são obrigatórios")
+      return
+    }
 
-        console.log("Meal updated successfully, refreshing data...")
+    console.log("Updating meal:", editingMeal.id, "type:", mealType)
 
-        // Force refresh meals for this date after updating
-        await fetchMeals(date)
+    try {
+      const updatedMeal = {
+        ...editingMeal,
+        name: mealName,
+        originalName: originalFoodName || undefined,
+        calories: Number(calories),
+        protein: Number(protein) || 0,
+        carbs: Number(carbs) || 0,
+        fat: Number(fat) || 0,
+        mealType,
+        serving,
+        altMeasures,
+        imageUrl: foodImage || undefined,
+      }
 
-        console.log("Data refreshed after updating meal")
+      await updateMeal(editingMeal.id, updatedMeal)
+
+      console.log("Meal updated successfully, refreshing data...")
+
+      // Force refresh meals for this date after updating
+      await fetchMeals(date)
+
+      console.log("Data refreshed after updating meal")
+      resetForm()
+    } catch (error) {
+      console.error("Error updating meal:", error)
+
+      // Check if it's a "not found" error
+      if (
+        error instanceof Error &&
+        (error.message.includes("not found") ||
+          error.message.includes("404") ||
+          error.message.includes("Meal not found"))
+      ) {
+        setError("Esta refeição foi excluída e não pode mais ser editada.")
         resetForm()
-      } catch (error) {
-        console.error("Error updating meal:", error)
+      } else {
+        setError(error instanceof Error ? error.message : "Erro ao atualizar refeição")
       }
     }
   }
@@ -277,6 +322,12 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
   const handleRemoveMeal = async (meal: any) => {
     if (meal.id) {
       console.log("Removing meal:", meal.id)
+
+      // If this meal is being edited, close the edit form
+      if (editingMeal && editingMeal.id === meal.id) {
+        console.log("Meal being deleted is currently being edited, resetting form")
+        resetForm()
+      }
 
       try {
         await removeMeal(meal.id)
@@ -370,8 +421,9 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                           </thead>
                           <tbody>
                             {mealsByType[type].map((meal, index) => {
+                              const isBeingEdited = editingMeal && editingMeal.id === meal.id
                               return (
-                                <tr key={meal.id || index}>
+                                <tr key={meal.id || index} className={isBeingEdited ? "editing-row" : ""}>
                                   <td>
                                     {meal.imageUrl && (
                                       <img
@@ -381,7 +433,10 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                                       />
                                     )}
                                   </td>
-                                  <td>{meal.name}</td>
+                                  <td>
+                                    {meal.name}
+                                    {isBeingEdited && <span className="editing-indicator"> (editando)</span>}
+                                  </td>
                                   <td>{meal.serving ? `${meal.serving.quantity} ${meal.serving.unit}` : "1 porção"}</td>
                                   <td>{meal.calories}</td>
                                   <td>{meal.protein}</td>
@@ -393,6 +448,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                                         className="button-icon"
                                         onClick={() => handleEditMeal(meal)}
                                         title="Editar refeição"
+                                        disabled={isBeingEdited}
                                       >
                                         <Edit className="icon-small" />
                                       </button>
@@ -457,6 +513,7 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
                   {foodImage && <img src={foodImage || "/placeholder.svg"} alt={mealName} className="food-image" />}
                   <div className="food-name-container">
                     <h3 className="food-name">{mealName}</h3>
+                    {editingMeal && <p className="editing-notice">Editando refeição existente</p>}
                   </div>
                 </div>
 
@@ -756,6 +813,17 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
           color: #ffffff !important;
         }
 
+        .dark-mode .button-icon:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .dark-mode .button-icon:disabled:hover {
+          background-color: transparent !important;
+          color: #aaaaaa !important;
+          transform: none;
+        }
+
         .dark-mode .full-width {
           width: 100%;
         }
@@ -796,6 +864,29 @@ export default function DayPage({ params }: { params: Promise<{ date: string }> 
 
         .dark-mode .total-row:hover {
           background-color: #2c2c2c !important;
+        }
+
+        /* Linha sendo editada */
+        .dark-mode .editing-row {
+          background-color: rgba(16, 185, 129, 0.1) !important;
+          border: 1px solid rgba(16, 185, 129, 0.3) !important;
+        }
+
+        .dark-mode .editing-row:hover {
+          background-color: rgba(16, 185, 129, 0.15) !important;
+        }
+
+        .editing-indicator {
+          color: #10b981 !important;
+          font-size: 0.8rem;
+          font-style: italic;
+        }
+
+        .editing-notice {
+          color: #10b981 !important;
+          font-size: 0.8rem;
+          font-style: italic;
+          margin: 0.25rem 0 0 0;
         }
 
         /* Imagens */
