@@ -10,7 +10,6 @@ Um sistema completo para rastreamento de refeições e análise nutricional, des
 - [Instalação](#instalação)
 - [Configuração](#configuração)
 - [Uso](#uso)
-- [Estrutura do Projeto](#estrutura-do-projeto)
 - [API Endpoints](#api-endpoints)
 - [Banco de Dados](#banco-de-dados)
 - [Contribuição](#contribuição)
@@ -168,42 +167,6 @@ O sistema inclui um usuário de demonstração:
 1. Clique no ícone de edição
 2. Modifique os dados necessários
 3. Salve as alterações
-
-## 📁 Estrutura do Projeto
-
-\`\`\`
-meal-tracker/
-├── app/                          # App Router do Next.js
-│   ├── api/                      # API Routes
-│   │   ├── auth/                 # Autenticação
-│   │   ├── meals/                # CRUD de refeições
-│   │   └── nutritionix/          # Integração Nutritionix
-│   ├── day/[date]/               # Página de refeições do dia
-│   ├── reports/                  # Relatórios
-│   ├── login/                    # Página de login
-│   ├── signup/                   # Página de cadastro
-│   ├── layout.tsx                # Layout principal
-│   ├── page.tsx                  # Dashboard
-│   └── globals.css               # Estilos globais
-├── components/                   # Componentes React
-│   ├── ui/                       # Componentes base
-│   ├── auth-wrapper.tsx          # Wrapper de autenticação
-│   ├── basic-calendar.tsx        # Calendário
-│   ├── food-search.tsx           # Busca de alimentos
-│   ├── serving-selector.tsx      # Seletor de porções
-│   └── user-menu.tsx             # Menu do usuário
-├── lib/                          # Utilitários
-│   ├── auth.ts                   # Lógica de autenticação
-│   ├── auth-store.ts             # Store de autenticação
-│   ├── database.ts               # Configuração do banco
-│   ├── deepl-translation.ts      # Tradução
-│   └── store.ts                  # Store principal
-├── scripts/                      # Scripts utilitários
-│   └── init-db.js                # Inicialização do banco
-├── .env.local                    # Variáveis de ambiente
-├── package.json                  # Dependências
-└── README.md                     # Documentação
-\`\`\`
 
 ## 🔌 API Endpoints
 
@@ -391,15 +354,6 @@ npm run test:e2e
 - Escreva testes para novas features
 - Documente APIs e componentes
 
-## 📝 Changelog
-
-### v1.0.0 (2024-01-15)
-- ✨ Sistema de autenticação completo
-- ✨ Integração com APIs Nutritionix e DeepL
-- ✨ Dashboard com gráficos interativos
-- ✨ Relatórios mensais
-- ✨ Tema escuro responsivo
-
 ## 🐛 Problemas Conhecidos
 
 - [ ] Cache de tradução para melhor performance
@@ -420,7 +374,12 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICE
 
 ## 👥 Autores
 
-- **Seu Nome** - *Desenvolvimento inicial* - [SeuGitHub](https://github.com/seu-usuario)
+- **Francielly Dias Macedo**
+- **Juan Tavares Marcolino Lirio**
+- **Kaylane Simões dos Santos**
+- **Maria Eduarda Lopes Constantino**
+- **Mylena Leite Bortolozzo**
+- **Pierry Jonny Belarmino Andrade**
 
 ## 🙏 Agradecimentos
 
@@ -430,7 +389,5 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICE
 - Comunidade Next.js pelo framework incrível
 
 ---
-
-**📧 Suporte:** Para dúvidas ou problemas, abra uma [issue](https://github.com/seu-usuario/meal-tracker/issues) no GitHub.
 
 **🌟 Gostou do projeto?** Deixe uma estrela no repositório!
