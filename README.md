@@ -1,6 +1,7 @@
 # 🍽️ Meal Tracker - Sistema de Rastreamento de Refeições
 
 Um sistema completo para rastreamento de refeições e análise nutricional, desenvolvido com Next.js 14, TypeScript e SQLite.
+Caso prefira conferir uma demonstração do sistema, acesse: https://youtu.be/LsQBmMzzz2M
 
 ## 📋 Índice
 
