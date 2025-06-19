@@ -92,9 +92,9 @@ cp .env.example .env.local
 4. **Edite o arquivo `.env.local`**
 \`\`\`env
 # APIs
-NUTRITIONIX_APP_ID=sua_app_id_nutritionix
-NUTRITIONIX_API_KEY=sua_chave_nutritionix
-DEEPL_API_KEY=sua_chave_deepl
+NUTRITIONIX_API_KEY = 446afa0bf42bc57d26b8a194f376d464
+NUTRITIONIX_APP_ID = c454b796
+DEEPL_API_KEY = abfa482a-c23f-46cc-9f21-443d88fc881e:fx
 
 # Segurança
 JWT_SECRET=sua_chave_secreta_jwt_muito_segura
